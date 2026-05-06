@@ -74,7 +74,6 @@ html, body {
 }
 
 .bird-preview {
-    font-size: 80px;
     margin-bottom: 24px;
     animation: float 1.5s ease-in-out infinite;
     filter: drop-shadow(2px 4px 6px rgba(0, 0, 0, 0.4));
@@ -83,6 +82,190 @@ html, body {
 @keyframes float {
     0%, 100% { transform: translateY(0) rotate(-5deg); }
     50% { transform: translateY(-12px) rotate(5deg); }
+}
+
+/* ---------------- Original CSS-art bird sprite ---------------- */
+.bird-sprite {
+    position: relative;
+    width: 110px;
+    height: 90px;
+}
+.bird-sprite.small { width: 70px; height: 58px; }
+.bs-body {
+    position: absolute;
+    inset: 8% 16% 8% 16%;
+    background: radial-gradient(circle at 30% 30%, #fff59d 0%, #ffeb3b 45%, #fbc02d 100%);
+    border: 3px solid #f57f17;
+    border-radius: 50%;
+    box-shadow: inset -6px -8px 0 rgba(0,0,0,0.08);
+}
+.bird-sprite.small .bs-body { border-width: 2px; }
+.bs-wing {
+    position: absolute;
+    width: 38%;
+    height: 36%;
+    left: 22%;
+    top: 38%;
+    background: linear-gradient(135deg, #fbc02d 0%, #f9a825 100%);
+    border: 3px solid #e65100;
+    border-radius: 60% 40% 50% 50% / 60% 60% 40% 40%;
+    transform-origin: 60% 50%;
+    animation: wingFlap 0.45s ease-in-out infinite alternate;
+    z-index: 3;
+}
+.bird-sprite.small .bs-wing { border-width: 2px; }
+@keyframes wingFlap {
+    from { transform: rotate(-12deg) translateY(0); }
+    to   { transform: rotate(20deg) translateY(-3px); }
+}
+.bs-eye {
+    position: absolute;
+    right: 22%;
+    top: 28%;
+    width: 22%;
+    height: 26%;
+    background: #fff;
+    border: 2px solid #4e342e;
+    border-radius: 50%;
+    z-index: 4;
+}
+.bs-eye span {
+    position: absolute;
+    left: 42%;
+    top: 28%;
+    width: 42%;
+    height: 50%;
+    background: #212121;
+    border-radius: 50%;
+}
+.bs-eye span::after {
+    content: '';
+    position: absolute;
+    left: 14%;
+    top: 14%;
+    width: 35%;
+    height: 35%;
+    background: #fff;
+    border-radius: 50%;
+}
+.bs-beak {
+    position: absolute;
+    right: -6%;
+    top: 44%;
+    width: 28%;
+    height: 22%;
+    background: linear-gradient(180deg, #ff7043, #d84315);
+    border: 2px solid #4e342e;
+    clip-path: polygon(0 30%, 100% 50%, 0 70%);
+    z-index: 4;
+}
+.bird-sprite.sad .bs-eye span {
+    height: 30%;
+    top: 40%;
+    border-radius: 6px;
+}
+.bs-tear {
+    position: absolute;
+    right: 20%;
+    top: 52%;
+    width: 6px;
+    height: 9px;
+    background: #4fc3f7;
+    border-radius: 50% 50% 50% 50% / 30% 30% 70% 70%;
+    z-index: 5;
+    animation: drip 1.4s ease-in-out infinite;
+}
+@keyframes drip {
+    0%, 100% { transform: translateY(0); opacity: 1; }
+    50% { transform: translateY(8px); opacity: 0.6; }
+}
+
+/* ---------------- Mode icons (CSS art) ---------------- */
+.mode-icon {
+    margin-bottom: 6px;
+    display: flex;
+    justify-content: center;
+}
+.ico-target {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #fff 0 22%, #f44336 22% 40%, #fff 40% 58%, #f44336 58% 78%, #fff 78% 100%);
+    border: 3px solid #b71c1c;
+    box-shadow: 0 3px 0 rgba(0,0,0,0.2);
+}
+.ico-doc {
+    position: relative;
+    width: 42px;
+    height: 50px;
+    background: #fffde7;
+    border: 3px solid #5d4037;
+    border-radius: 4px;
+    box-shadow: 0 3px 0 rgba(0,0,0,0.2);
+}
+.ico-doc::before {
+    content: '';
+    position: absolute;
+    inset: 8px 6px 8px 6px;
+    background:
+        linear-gradient(#9e9e9e, #9e9e9e) 0 0/100% 2px no-repeat,
+        linear-gradient(#9e9e9e, #9e9e9e) 0 6px/100% 2px no-repeat,
+        linear-gradient(#9e9e9e, #9e9e9e) 0 12px/100% 2px no-repeat,
+        linear-gradient(#9e9e9e, #9e9e9e) 0 18px/100% 2px no-repeat,
+        linear-gradient(#9e9e9e, #9e9e9e) 0 24px/100% 2px no-repeat;
+}
+.ico-doc::after {
+    content: 'TAX';
+    position: absolute;
+    bottom: 4px;
+    right: 4px;
+    color: #c62828;
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: 1px;
+    transform: rotate(-12deg);
+    border: 2px solid #c62828;
+    padding: 0 3px;
+    border-radius: 2px;
+    background: rgba(255,255,255,0.7);
+}
+
+/* ---------------- Inline icons ---------------- */
+.ico {
+    display: inline-block;
+    width: 22px;
+    height: 22px;
+    vertical-align: middle;
+    margin-right: 4px;
+}
+.ico-gun {
+    position: relative;
+    width: 26px;
+    height: 16px;
+    background: #424242;
+    border: 2px solid #212121;
+    border-radius: 3px 6px 2px 2px;
+}
+.ico-gun::before {
+    content: '';
+    position: absolute;
+    left: -2px;
+    bottom: -8px;
+    width: 8px;
+    height: 10px;
+    background: #5d4037;
+    border: 2px solid #3e2723;
+    border-radius: 2px;
+}
+.ico-gun::after {
+    content: '';
+    position: absolute;
+    right: 2px;
+    top: 2px;
+    width: 8px;
+    height: 4px;
+    background: #ffeb3b;
+    border-radius: 1px;
 }
 
 /* Buttons */
@@ -279,22 +462,62 @@ html, body {
     position: absolute;
     bottom: 24px;
     right: 24px;
-    width: 80px;
-    height: 80px;
+    width: 86px;
+    height: 86px;
     border-radius: 50%;
-    border: none;
+    border: 3px solid #fff;
     background: radial-gradient(circle at 30% 30%, #ff8a65, #d84315);
-    color: #fff;
-    font-size: 36px;
     cursor: pointer;
     pointer-events: auto;
-    box-shadow: 0 5px 0 #b71c1c, 0 6px 12px rgba(0, 0, 0, 0.3);
-    transition: transform 0.05s;
+    box-shadow: 0 5px 0 #7f0000, 0 6px 18px rgba(0, 0, 0, 0.4);
+    transition: transform 0.05s, box-shadow 0.05s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .shoot-btn:active {
-    transform: translateY(3px);
-    box-shadow: 0 2px 0 #b71c1c;
+    transform: translateY(4px);
+    box-shadow: 0 1px 0 #7f0000, 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+.shoot-ico {
+    position: relative;
+    width: 44px;
+    height: 26px;
+    background: #263238;
+    border: 3px solid #000;
+    border-radius: 4px 8px 3px 3px;
+    box-shadow: inset -3px -3px 0 rgba(0,0,0,0.3);
+}
+.shoot-ico::before {
+    /* grip */
+    content: '';
+    position: absolute;
+    left: 4px;
+    bottom: -12px;
+    width: 14px;
+    height: 14px;
+    background: #4e342e;
+    border: 3px solid #000;
+    border-radius: 2px;
+}
+.shoot-ico::after {
+    /* muzzle blast */
+    content: '';
+    position: absolute;
+    right: -10px;
+    top: 50%;
+    width: 16px;
+    height: 16px;
+    background: radial-gradient(circle, #ffeb3b 0%, #ff9800 60%, transparent 70%);
+    transform: translateY(-50%);
+    border-radius: 50%;
+    animation: muzzlePulse 0.6s ease-in-out infinite;
+}
+@keyframes muzzlePulse {
+    0%, 100% { opacity: 0.9; transform: translateY(-50%) scale(1); }
+    50%      { opacity: 0.5; transform: translateY(-50%) scale(0.7); }
 }
 
 /* Game Over */
@@ -328,21 +551,36 @@ html, body {
 
 .jail-cell {
     position: relative;
-    width: 220px;
-    height: 160px;
-    background: linear-gradient(180deg, #5d4037, #3e2723);
+    width: 240px;
+    height: 170px;
+    background:
+        radial-gradient(ellipse at 50% 100%, #6d4c41 0%, #3e2723 70%),
+        linear-gradient(180deg, #5d4037, #3e2723);
     border-radius: 8px;
     overflow: hidden;
-    box-shadow: 0 6px 0 #1b0d0a, inset 0 0 30px rgba(0, 0, 0, 0.6);
+    box-shadow: 0 6px 0 #1b0d0a, inset 0 0 30px rgba(0, 0, 0, 0.7);
     margin: 0 auto;
+    border: 3px solid #1b0d0a;
+}
+
+.jail-bricks {
+    position: absolute;
+    inset: 0;
+    background-image:
+        linear-gradient(90deg, rgba(0,0,0,0.25) 0 1px, transparent 1px 100%),
+        linear-gradient(0deg, rgba(0,0,0,0.25) 0 1px, transparent 1px 100%);
+    background-size: 36px 24px, 36px 24px;
+    background-position: 0 0, 18px 12px;
+    opacity: 0.6;
 }
 
 .jail-bars {
     position: absolute;
     inset: 0;
+    pointer-events: none;
     background-image:
-        linear-gradient(90deg, transparent 0, transparent 22px, #9e9e9e 22px, #9e9e9e 30px),
-        linear-gradient(180deg, #607d8b 0, #607d8b 8px, transparent 8px, transparent calc(100% - 8px), #607d8b calc(100% - 8px));
+        linear-gradient(90deg, transparent 0, transparent 22px, #b0bec5 22px, #b0bec5 28px, #78909c 28px, #78909c 30px, transparent 30px),
+        linear-gradient(180deg, #455a64 0, #455a64 10px, transparent 10px, transparent calc(100% - 10px), #455a64 calc(100% - 10px));
     background-size: 30px 100%, 100% 100%;
     background-repeat: repeat-x, no-repeat;
 }
@@ -352,14 +590,14 @@ html, body {
     bottom: 14px;
     left: 50%;
     transform: translateX(-50%);
-    font-size: 60px;
     animation: jailShake 1.2s ease-in-out infinite;
     filter: drop-shadow(2px 3px 4px rgba(0, 0, 0, 0.6));
+    z-index: 2;
 }
 
 @keyframes jailShake {
     0%, 100% { transform: translateX(-50%) rotate(-5deg); }
-    50% { transform: translateX(-50%) rotate(5deg); }
+    50%      { transform: translateX(-50%) rotate(5deg); }
 }
 
 /* Surprise notification */
@@ -392,15 +630,29 @@ html, body {
     100% { transform: scale(1) rotate(0); }
 }
 
-.surprise-emoji {
-    font-size: 72px;
-    margin-bottom: 8px;
-    animation: spin 1s linear infinite;
+.surprise-icon {
+    width: 80px;
+    height: 50px;
+    margin: 0 auto 10px;
+    background: conic-gradient(
+        from 180deg at 50% 100%,
+        #f44336 0 14%,
+        #ff9800 14% 28%,
+        #ffeb3b 28% 42%,
+        #4caf50 42% 56%,
+        #2196f3 56% 70%,
+        #9c27b0 70% 86%,
+        transparent 86% 100%
+    );
+    border-radius: 80px 80px 0 0;
+    animation: spin 1.6s linear infinite;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.2);
 }
 
 @keyframes spin {
-    from { transform: rotate(0); }
-    to { transform: rotate(360deg); }
+    from { transform: rotate(-8deg) scale(1); }
+    50%  { transform: rotate(8deg) scale(1.05); }
+    to   { transform: rotate(-8deg) scale(1); }
 }
 
 .surprise-title {
@@ -416,6 +668,82 @@ html, body {
     color: #5d4037;
     margin-top: 6px;
     font-weight: bold;
+}
+
+/* ---------------- Cutscene ---------------- */
+.cutscene-screen {
+    background: rgba(0, 0, 0, 0.15);
+    backdrop-filter: none;
+    justify-content: flex-end;
+    padding-bottom: 80px;
+}
+
+.cutscene-dialog {
+    background: rgba(255, 255, 255, 0.95);
+    color: #2c3e50;
+    padding: 18px 26px;
+    border-radius: 14px;
+    border: 4px solid #2c3e50;
+    font-size: clamp(18px, 4vw, 26px);
+    font-weight: bold;
+    max-width: 88vw;
+    text-align: center;
+    box-shadow: 0 6px 0 rgba(0, 0, 0, 0.35);
+    margin-bottom: 18px;
+    animation: dialogPop 0.35s ease-out;
+}
+@keyframes dialogPop {
+    0% { transform: scale(0.6); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.cutscene-skip {
+    align-self: flex-end;
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    margin: 0;
+    min-width: 0;
+    padding: 10px 18px;
+    font-size: 16px;
+}
+
+/* ---------------- Shop polish ---------------- */
+.gun-card {
+    flex-wrap: wrap;
+}
+.gun-card.equipped {
+    background: linear-gradient(180deg, #fff9c4, #fff59d);
+    border: 3px solid #f9a825;
+    padding: 9px 11px;
+}
+.gun-stats {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 6px;
+    width: 100%;
+}
+.gun-stat {
+    background: rgba(0,0,0,0.06);
+    border-radius: 6px;
+    padding: 2px 8px;
+    font-size: 11px;
+    color: #455a64;
+    font-weight: bold;
+}
+.gun-stat.dmg { background: #ffcdd2; color: #b71c1c; }
+.gun-stat.rate { background: #bbdefb; color: #0d47a1; }
+.gun-stat.spd { background: #c8e6c9; color: #1b5e20; }
+.gun-preview {
+    width: 50px;
+    height: 50px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.04);
+    border-radius: 10px;
 }
 
 .hidden { display: none !important; }

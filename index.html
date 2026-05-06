@@ -15,26 +15,39 @@
         <div id="startScreen" class="screen active">
             <h1 class="title">FLAPPY BIRD 2</h1>
             <h2 class="subtitle">— ADVANCED —</h2>
-            <div class="bird-preview">🐤</div>
+            <div class="bird-preview">
+                <div class="bird-sprite">
+                    <div class="bs-wing"></div>
+                    <div class="bs-body"></div>
+                    <div class="bs-eye"><span></span></div>
+                    <div class="bs-beak"></div>
+                </div>
+            </div>
             <button class="btn btn-primary" id="playBtn">PLAY</button>
-            <button class="btn btn-secondary" id="shopBtnFromStart">🔫 GUN SHOP</button>
-            <p class="hint">Tap / Space to fly • F / Click to shoot</p>
+            <button class="btn btn-secondary" id="shopBtnFromStart"><span class="ico ico-gun"></span> GUN SHOP</button>
+            <p class="hint">Space / Tap to fly &nbsp;•&nbsp; F / Shoot button to fire</p>
         </div>
 
         <!-- Mode Selection Screen -->
         <div id="modeScreen" class="screen">
             <h2 class="title-small">SELECT MODE</h2>
             <button class="mode-btn" id="classicModeBtn">
-                <div class="mode-icon">🎯</div>
+                <div class="mode-icon"><div class="ico-target"></div></div>
                 <div class="mode-name">CLASSIC ADVANCED</div>
-                <div class="mode-desc">Infinite flight with enemies & guns</div>
+                <div class="mode-desc">Infinite flight with enemies &amp; guns</div>
             </button>
             <button class="mode-btn tax-mode" id="taxModeBtn">
-                <div class="mode-icon">📋</div>
+                <div class="mode-icon"><div class="ico-doc"></div></div>
                 <div class="mode-name">TAX ESCAPE</div>
                 <div class="mode-desc">Run from auditors and the IRS!</div>
             </button>
             <button class="btn btn-back" id="backFromMode">← BACK</button>
+        </div>
+
+        <!-- Cutscene (Tax Escape intro) -->
+        <div id="cutsceneScreen" class="screen cutscene-screen">
+            <div class="cutscene-dialog" id="cutsceneDialog">The taxes are coming...</div>
+            <button class="btn btn-back cutscene-skip" id="cutsceneSkipBtn">SKIP ▶</button>
         </div>
 
         <!-- Shop Screen -->
@@ -52,7 +65,9 @@
                 <div class="hud-item">💰 <span id="coinsDisplay">0</span></div>
                 <div class="hud-item">🔫 <span id="gunDisplay">Basic</span></div>
             </div>
-            <button id="shootBtn" class="shoot-btn">🔥</button>
+            <button id="shootBtn" class="shoot-btn" aria-label="Shoot">
+                <span class="shoot-ico"></span>
+            </button>
         </div>
 
         <!-- Game Over Screen -->
@@ -61,8 +76,17 @@
             <div id="gameOverMessage" class="game-over-msg"></div>
             <div id="jailScene" class="jail-scene hidden">
                 <div class="jail-cell">
+                    <div class="jail-bricks"></div>
                     <div class="jail-bars"></div>
-                    <div class="jail-bird">🐤</div>
+                    <div class="jail-bird">
+                        <div class="bird-sprite small sad">
+                            <div class="bs-wing"></div>
+                            <div class="bs-body"></div>
+                            <div class="bs-eye"><span></span></div>
+                            <div class="bs-beak"></div>
+                            <div class="bs-tear"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="stats">
@@ -76,7 +100,7 @@
         <!-- Surprise Notification -->
         <div id="surpriseNotif" class="surprise-notif hidden">
             <div class="surprise-content">
-                <div class="surprise-emoji">🎉</div>
+                <div class="surprise-icon"></div>
                 <div class="surprise-title" id="surpriseTitle">SURPRISE!</div>
                 <div class="surprise-text" id="surpriseText"></div>
             </div>

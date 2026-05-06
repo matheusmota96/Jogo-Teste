@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>Flappy Bird 2 Advanced</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas"></canvas>
+
+        <!-- Start Screen -->
+        <div id="startScreen" class="screen active">
+            <h1 class="title">FLAPPY BIRD 2</h1>
+            <h2 class="subtitle">— ADVANCED —</h2>
+            <div class="bird-preview">🐤</div>
+            <button class="btn btn-primary" id="playBtn">PLAY</button>
+            <button class="btn btn-secondary" id="shopBtnFromStart">🔫 GUN SHOP</button>
+            <p class="hint">Tap / Space to fly • F / Click to shoot</p>
+        </div>
+
+        <!-- Mode Selection Screen -->
+        <div id="modeScreen" class="screen">
+            <h2 class="title-small">SELECT MODE</h2>
+            <button class="mode-btn" id="classicModeBtn">
+                <div class="mode-icon">🎯</div>
+                <div class="mode-name">CLASSIC ADVANCED</div>
+                <div class="mode-desc">Infinite flight with enemies & guns</div>
+            </button>
+            <button class="mode-btn tax-mode" id="taxModeBtn">
+                <div class="mode-icon">📋</div>
+                <div class="mode-name">TAX ESCAPE</div>
+                <div class="mode-desc">Run from auditors and the IRS!</div>
+            </button>
+            <button class="btn btn-back" id="backFromMode">← BACK</button>
+        </div>
+
+        <!-- Shop Screen -->
+        <div id="shopScreen" class="screen">
+            <h2 class="title-small">🔫 GUN SHOP</h2>
+            <div class="coin-display">💰 <span id="shopCoins">0</span></div>
+            <div id="gunsList" class="guns-list"></div>
+            <button class="btn btn-back" id="backFromShop">← BACK</button>
+        </div>
+
+        <!-- HUD (in-game) -->
+        <div id="hud" class="hidden">
+            <div class="hud-top">
+                <div class="hud-item">📏 <span id="distanceDisplay">0</span>m</div>
+                <div class="hud-item">💰 <span id="coinsDisplay">0</span></div>
+                <div class="hud-item">🔫 <span id="gunDisplay">Basic</span></div>
+            </div>
+            <button id="shootBtn" class="shoot-btn">🔥</button>
+        </div>
+
+        <!-- Game Over Screen -->
+        <div id="gameOverScreen" class="screen">
+            <h2 id="gameOverTitle" class="title-small">GAME OVER</h2>
+            <div id="gameOverMessage" class="game-over-msg"></div>
+            <div id="jailScene" class="jail-scene hidden">
+                <div class="jail-cell">
+                    <div class="jail-bars"></div>
+                    <div class="jail-bird">🐤</div>
+                </div>
+            </div>
+            <div class="stats">
+                <div>Distance: <span id="finalDistance">0</span>m</div>
+                <div>Coins earned: <span id="finalCoins">0</span></div>
+            </div>
+            <button class="btn btn-primary" id="restartBtn">🔄 RESTART</button>
+            <button class="btn btn-secondary" id="menuBtn">🏠 MAIN MENU</button>
+        </div>
+
+        <!-- Surprise Notification -->
+        <div id="surpriseNotif" class="surprise-notif hidden">
+            <div class="surprise-content">
+                <div class="surprise-emoji">🎉</div>
+                <div class="surprise-title" id="surpriseTitle">SURPRISE!</div>
+                <div class="surprise-text" id="surpriseText"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>

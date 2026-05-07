@@ -135,7 +135,17 @@ function showScreen(name) {
 
 // ---------------- Game state ----------------
 const STATE = { MENU: 'menu', CUTSCENE: 'cutscene', PLAYING: 'playing', OVER: 'over' };
-const MODE  = { CLASSIC: 'classic', TAX: 'tax', MARIO: 'mario' };
+const MODE  = {
+    CLASSIC: 'classic', TAX: 'tax', MARIO: 'mario',
+    DRUNK: 'drunk', BEE: 'bee', POTATO: 'potato', BOSS: 'boss',
+    REVERSE: 'reverse', CHAOS: 'chaos', HACKER: 'hacker', SLEEP: 'sleep',
+};
+function isFlapMode(m) {
+    return m === MODE.CLASSIC || m === MODE.TAX || m === MODE.DRUNK ||
+           m === MODE.BEE || m === MODE.POTATO || m === MODE.BOSS ||
+           m === MODE.REVERSE || m === MODE.CHAOS || m === MODE.HACKER ||
+           m === MODE.SLEEP;
+}
 
 let state = STATE.MENU;
 let mode  = MODE.CLASSIC;
@@ -154,6 +164,26 @@ let spawnTimer = 0, enemyTimer = 0, coinTimer = 0, lastShotAt = 0;
 let backgroundOffset = 0, groundOffset = 0;
 let screenShake = 0;     // seconds of remaining shake
 let screenShakeMag = 0;  // pixels
+
+// FX state shared across chaotic modes (defined here so flap/update/render
+// can read it safely; actual mutators live in the chaotic-modes section).
+const modeFx = {
+    blur: 0, rotate: 0, invert: 0, scale: 1, flipY: false,
+    pendingFlap: 0, chaosGravityMul: 1,
+    drunkActive: false, drunkTimer: 0, feetEaten: 0, feetSpawnTimer: 0,
+    wineTimer: 5, drunkPhase: 0,
+    bees: [], beeScreamTimer: 5,
+    boss: null, bossSpawned: false, bossKilled: false,
+    chaosTimer: 4, chaosEffect: null, chaosEffectTimer: 0, savedBirdR: 0,
+    hackerPopupTimer: 3,
+    asleep: false, sleepCheckTimer: 8, sleepWakeTaps: 0, sleepWakeTime: 0,
+    reverseFlipTimer: 8,
+    potatoRainTimer: 3, potatoes: [],
+    feetRain: [],
+};
+
+let wineBottles = [];
+let giantFeet = [];
 
 // World constants
 const GRAVITY = 1700;
@@ -205,6 +235,8 @@ function startGame(selectedMode) {
     screenShake = 0;
     screenShakeMag = 0;
 
+    resetModeFx();
+
     Object.values(screens).forEach(s => s.classList.remove('active'));
     hud.classList.remove('hidden');
     setHudMode('flap');
@@ -232,6 +264,17 @@ function updateHud() {
 // ---------------- Input ----------------
 function flap() {
     if (state !== STATE.PLAYING || mode === MODE.MARIO || !bird) return;
+    // Sleep mode: taps count toward waking, no flap while asleep
+    if (mode === MODE.SLEEP && modeFx.asleep) {
+        modeFx.sleepWakeTaps += 1;
+        sfx.flap();
+        return;
+    }
+    // Drunk mode: queue flap with delay
+    if (mode === MODE.DRUNK && modeFx.drunkActive) {
+        modeFx.pendingFlap = 0.18;
+        return;
+    }
     bird.vy = FLAP_VY;
     bird.flapAnim = 0.18;
     sfx.flap();
@@ -325,10 +368,8 @@ document.getElementById('playBtn').addEventListener('click', () => { ensureAudio
 document.getElementById('shopBtnFromStart').addEventListener('click', () => { ensureAudio(); renderShop(); showScreen('shop'); });
 document.getElementById('backFromMode').addEventListener('click', () => showScreen('start'));
 document.getElementById('backFromShop').addEventListener('click', () => showScreen('start'));
-document.getElementById('classicModeBtn').addEventListener('click', () => { ensureAudio(); startGame(MODE.CLASSIC); });
-document.getElementById('taxModeBtn').addEventListener('click',     () => { ensureAudio(); startCutscene(); });
-document.getElementById('marioModeBtn').addEventListener('click',   () => { ensureAudio(); showScreen('difficulty'); });
 document.getElementById('backFromDiff').addEventListener('click',   () => showScreen('mode'));
+// Mode select grid is wired in the chaotic-modes section at the bottom of the file.
 document.querySelectorAll('.diff-btn').forEach(btn => {
     btn.addEventListener('click', () => {
         ensureAudio();
@@ -342,6 +383,7 @@ document.getElementById('restartBtn').addEventListener('click', () => {
 document.getElementById('menuBtn').addEventListener('click', () => {
     hud.classList.add('hidden');
     setHudMode('flap');
+    resetModeFx();
     showScreen('start');
     state = STATE.MENU;
 });
@@ -626,14 +668,29 @@ function spawnHitSplash(x, y, color) {
 
 // ---------------- Update ----------------
 function update(dt) {
+    // Per-mode FX & special spawns/inputs
+    updateModeFx(dt);
+    if (state !== STATE.PLAYING) return; // a mode hook may have ended the game
+
+    // Drunk delayed flap
+    if (modeFx.pendingFlap > 0 && bird) {
+        modeFx.pendingFlap -= dt;
+        if (modeFx.pendingFlap <= 0) {
+            bird.vy = FLAP_VY * 0.85;
+            bird.flapAnim = 0.18;
+            sfx.flap();
+        }
+    }
+
     const speed = SPEED_BASE + Math.min(220, distance / 6);
     distance += (speed * dt) / 30;
 
     backgroundOffset = (backgroundOffset + speed * dt * 0.25) % W;
     groundOffset = (groundOffset + speed * dt) % 40;
 
-    // Bird physics
-    bird.vy = Math.min(MAX_VY, bird.vy + GRAVITY * dt);
+    // Bird physics (gravity modulated by chaos mode)
+    const gMul = modeFx.chaosGravityMul || 1;
+    bird.vy = Math.min(MAX_VY * gMul, bird.vy + GRAVITY * gMul * dt);
     bird.y += bird.vy * dt;
     bird.rot = Math.max(-0.5, Math.min(1.2, bird.vy / 600));
     if (bird.flapAnim > 0) bird.flapAnim -= dt;
@@ -813,6 +870,14 @@ function gameOver(reason) {
     }
 
     hud.classList.add('hidden');
+    // Hide chaotic-mode overlays so the game-over screen reads cleanly
+    document.getElementById('drunkHud').classList.add('hidden');
+    document.getElementById('drunkOverlay').classList.add('hidden');
+    document.getElementById('soberOverlay').classList.add('hidden');
+    document.getElementById('sleepOverlay').classList.add('hidden');
+    document.getElementById('chaosPopup').classList.add('hidden');
+    const hl = document.getElementById('hackerLayer');
+    hl.classList.add('hidden'); hl.innerHTML = '';
     showScreen('over');
     sfx.die();
 }
@@ -1067,13 +1132,17 @@ function drawEnemies() {
             ctx.shadowColor = '#fff';
             ctx.shadowBlur = 14;
         }
-        switch (e.type) {
-            case 'bat':      drawBat(e); break;
-            case 'wasp':     drawWasp(e); break;
-            case 'ufo':      drawUfo(e); break;
-            case 'auditor':  drawAuditor(e); break;
-            case 'taxpaper': drawTaxPaperSprite(e); break;
-            case 'drone':    drawDrone(e); break;
+        if (mode === MODE.POTATO) {
+            drawPotatoEnemy(e);
+        } else {
+            switch (e.type) {
+                case 'bat':      drawBat(e); break;
+                case 'wasp':     drawWasp(e); break;
+                case 'ufo':      drawUfo(e); break;
+                case 'auditor':  drawAuditor(e); break;
+                case 'taxpaper': drawTaxPaperSprite(e); break;
+                case 'drone':    drawDrone(e); break;
+            }
         }
         ctx.restore();
         // HP bar for multi-hp enemies
@@ -1279,7 +1348,9 @@ function drawBullets() {
 
         ctx.save();
         ctx.translate(b.x, b.y);
-        if (gun.shape === 'foot') {
+        if (mode === MODE.POTATO) {
+            drawPotatoBullet(b);
+        } else if (gun.shape === 'foot') {
             ctx.rotate(b.spin * 0.4);
             drawFootSprite(ctx);
         } else if (gun.shape === 'orb') {
@@ -1420,8 +1491,8 @@ function drawMuzzleFlashes() {
 
 // ---------------- Compose render ----------------
 function render() {
+    applyCanvasFx();
     ctx.save();
-    // Apply screen shake
     if (screenShake > 0) {
         const sm = screenShakeMag * (screenShake / 0.10);
         ctx.translate((Math.random() - 0.5) * sm, (Math.random() - 0.5) * sm);
@@ -1437,6 +1508,7 @@ function render() {
         drawMuzzleFlashes();
         drawParticles();
         if (bird) drawBird();
+        renderModeExtras();
     } else if (state === STATE.CUTSCENE) {
         drawCutscene();
     }
@@ -1589,6 +1661,10 @@ function buildMarioLevel(difficulty) {
 function startMarioMode(difficulty) {
     mode = MODE.MARIO;
     state = STATE.PLAYING;
+    // Clear any chaotic-mode FX from previous run
+    canvas.style.filter = '';
+    canvas.style.transform = '';
+    resetModeFx();
 
     const level = buildMarioLevel(difficulty);
     mario = {
@@ -2334,5 +2410,959 @@ window.addEventListener('keyup', e => {
     if (e.code === 'KeyF' || e.code === 'KeyZ' || e.code === 'KeyX' ||
         e.code === 'ShiftLeft' || e.code === 'ShiftRight') marioInput.fire = false;
 });
+
+// ============================================================================
+// CHAOTIC MODES — mode catalog, FX system, per-mode logic
+// ============================================================================
+
+const MODES_CATALOG = [
+    { key: 'classic', name: 'CLASSIC',     desc: 'Infinite flight & guns',         icon: 'target',   theme: '' },
+    { key: 'tax',     name: 'TAX ESCAPE',  desc: 'Run from auditors',              icon: 'doc',      theme: 'tax' },
+    { key: 'mario',   name: 'BIRD BROS',   desc: 'Mario-style platformer',         icon: 'mushroom', theme: 'mario' },
+    { key: 'drunk',   name: 'DRUNK MODE',  desc: 'Eat 200 feet to sober up',       icon: 'wine',     theme: 'drunk' },
+    { key: 'bee',     name: 'BEE MODE',    desc: 'BZZZZZZ. They want you.',        icon: 'bee',      theme: 'bee' },
+    { key: 'potato',  name: 'POTATO MODE', desc: 'Why is everything starchy',      icon: 'potato',   theme: 'potato' },
+    { key: 'boss',    name: 'BOSS MODE',   desc: 'One enormous menace',            icon: 'boss',     theme: 'boss' },
+    { key: 'reverse', name: 'REVERSE',     desc: 'Down is up. Up is down.',        icon: 'reverse',  theme: 'reverse' },
+    { key: 'chaos',   name: 'CHAOS',       desc: 'Random nonsense, every 5 sec',   icon: 'chaos',    theme: 'chaos' },
+    { key: 'hacker',  name: 'FAKE HACKER', desc: 'Definitely not real hacking',    icon: 'hacker',   theme: 'hacker' },
+    { key: 'sleep',   name: 'SLEEP MODE',  desc: 'Try to stay awake',              icon: 'sleep',    theme: 'sleep' },
+];
+
+const LOADING_TIPS = [
+    'Feet improve aerodynamics.',
+    'Taxes increase enemy spawn rate.',
+    'Bird law is very complicated.',
+    'Pressing F harder does nothing extra.',
+    'Wine is technically a vegetable.',
+    'In space, no one can hear you flap.',
+    'Bees have nine knees. (citation needed)',
+    'A potato is 96% loyalty by mass.',
+    'Auditors fear cake. Bring cake.',
+    'The bird cannot read. Do not show it your taxes.',
+    'Pro tip: do not get drunk.',
+    'Pro tip: get drunk.',
+    'If you see a giant foot, that is your foot.',
+    'Sleep is for the weak. And for sleep mode.',
+    'Hackers are usually fine. Probably.',
+    'The bird is judging you, quietly.',
+    'Microwaves are at 9pm tonight.',
+    'You miss 100% of the feet you do not eat.',
+    'Pigeons run six of the world’s top banks.',
+];
+
+const ACHIEVEMENTS_POOL = [
+    'First steps', 'Look ma, no hands', 'Mildly inebriated',
+    'Bee enthusiast', 'Chronic potato', 'Hacker pro 9000',
+    'Sleep deprived', 'Reverse cardio', 'Boss cuddler',
+    'Chaos theorist', 'Aerodynamic feet', 'Tax evader of the year',
+    'Slightly committed', 'Almost competent', 'Did the thing',
+];
+
+const FAKE_HACK_MESSAGES = [
+    'INITIATING ATTACK\n> root@bird:~# rm -rf /\n> permission denied (you are a bird)',
+    'SYSTEM HACKED\nSocial engineering: 100%\nFirewall: bypassed\nCake: located',
+    'WARNING\nNation-state actor detected.\nTheir nation: Australia.',
+    'TRACE ROUTE\nIP: 192.168.1.bird\nLocation: a tree, somewhere',
+    'EXPLOIT FOUND\nCVE-2026-FEET\nSeverity: HOT',
+    'UPLOADING\n[========>........] 47%\nfeet.zip: 6.2 GB',
+    'BREACH DETECTED\nUnauthorized access in:\n- fridge\n- oven\n- microwave',
+    'DECRYPTING WI-FI\npassword: hunter2\n... too easy',
+    'BIRD.EXE has stopped\nresponding. Continue\npretending nothing\nhappened?',
+    'THE GOVERNMENT\nis on line 1.\nThey would like\ntheir tax forms back.',
+];
+
+const CHAOS_POPUPS = [
+    { t: 'Windows', b: 'Your computer has\nbeen replaced with\na microwave.' },
+    { t: 'ERROR 404',  b: 'Bird not found.\nFinding bird... 87%' },
+    { t: 'UPDATE',     b: 'Important update\navailable: Feet 2.0' },
+    { t: 'WARNING',    b: 'You have 1 (one) too\nmany toes.' },
+    { t: 'CAPTCHA',    b: 'Prove you are NOT\na bird.' },
+    { t: 'NOTICE',     b: 'Your warranty has\nexpired.\nIt was on the bird.' },
+    { t: 'PRINTER',    b: 'Out of paper.\nOut of bird.' },
+    { t: 'IRS',        b: 'You owe us 12 feet.\nClick here to pay.' },
+];
+
+const CHAOS_EFFECTS = [
+    'giantBird', 'tinyBird', 'hyperGravity', 'moonGravity',
+    'invertColors', 'spinning', 'feetRain', 'fakeError',
+];
+
+// ----- Mode select grid -----
+function buildModeGrid() {
+    const grid = document.getElementById('modeGrid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    for (const m of MODES_CATALOG) {
+        const card = document.createElement('button');
+        card.className = `mode-card${m.theme ? ' theme-' + m.theme : ''}`;
+        card.innerHTML = `
+            <div class="mode-card-icon"><div class="ico-${m.icon}"></div></div>
+            <div class="mode-card-name">${m.name}</div>
+            <div class="mode-card-desc">${m.desc}</div>
+        `;
+        card.addEventListener('click', () => onModeClick(m.key));
+        grid.appendChild(card);
+    }
+}
+
+function onModeClick(modeKey) {
+    ensureAudio();
+    if (modeKey === 'mario') { showScreen('difficulty'); return; }
+    showLoadingTip(() => {
+        if (modeKey === 'tax') startCutscene();
+        else startGame(modeKey);
+    });
+}
+
+// ----- Loading tip -----
+function showLoadingTip(cb) {
+    const overlay = document.getElementById('loadingTip');
+    const tip = LOADING_TIPS[Math.floor(Math.random() * LOADING_TIPS.length)];
+    document.getElementById('loadingTipText').textContent = tip;
+    overlay.classList.remove('hidden');
+    let dismissed = false;
+    const dismiss = () => {
+        if (dismissed) return;
+        dismissed = true;
+        overlay.classList.add('hidden');
+        overlay.removeEventListener('click', dismiss);
+        cb();
+    };
+    overlay.addEventListener('click', dismiss);
+    setTimeout(dismiss, 1800);
+}
+
+// ----- Achievement toast -----
+let achievementCooldown = 0;
+function showAchievement(text) {
+    const toast = document.getElementById('achievementToast');
+    document.getElementById('achievementText').textContent = text;
+    toast.classList.remove('hidden');
+    toast.style.animation = 'none';
+    void toast.offsetHeight;
+    toast.style.animation = '';
+    sfx.surprise();
+    setTimeout(() => toast.classList.add('hidden'), 2800);
+}
+
+function maybeAchievement(dt) {
+    achievementCooldown -= dt;
+    if (achievementCooldown <= 0 && Math.random() < dt * 0.18) {
+        showAchievement(ACHIEVEMENTS_POOL[Math.floor(Math.random() * ACHIEVEMENTS_POOL.length)]);
+        achievementCooldown = 18 + Math.random() * 30;
+    }
+}
+
+// ----- FX application -----
+function applyCanvasFx() {
+    const f = [];
+    if (modeFx.blur > 0) f.push(`blur(${modeFx.blur}px)`);
+    if (modeFx.invert > 0) f.push(`invert(${modeFx.invert})`);
+    canvas.style.filter = f.join(' ');
+    const tr = [];
+    if (modeFx.rotate) tr.push(`rotate(${modeFx.rotate}deg)`);
+    if (modeFx.scale !== 1) tr.push(`scale(${modeFx.scale})`);
+    if (modeFx.flipY) tr.push('scaleY(-1)');
+    canvas.style.transform = tr.join(' ');
+}
+
+function resetModeFx() {
+    modeFx.blur = 0; modeFx.rotate = 0; modeFx.invert = 0;
+    modeFx.scale = 1; modeFx.flipY = false;
+    modeFx.pendingFlap = 0; modeFx.chaosGravityMul = 1;
+    modeFx.drunkActive = false; modeFx.drunkTimer = 0;
+    modeFx.feetEaten = 0; modeFx.feetSpawnTimer = 0;
+    modeFx.wineTimer = 5; modeFx.drunkPhase = 0;
+    modeFx.bees = []; modeFx.beeScreamTimer = 5;
+    modeFx.boss = null; modeFx.bossSpawned = false; modeFx.bossKilled = false;
+    modeFx.chaosTimer = 4; modeFx.chaosEffect = null; modeFx.chaosEffectTimer = 0;
+    modeFx.savedBirdR = 0;
+    modeFx.hackerPopupTimer = 3;
+    modeFx.asleep = false; modeFx.sleepCheckTimer = 8;
+    modeFx.sleepWakeTaps = 0; modeFx.sleepWakeTime = 0;
+    modeFx.reverseFlipTimer = 8;
+    modeFx.potatoRainTimer = 3; modeFx.potatoes = [];
+    modeFx.feetRain = [];
+    wineBottles = [];
+    giantFeet = [];
+    achievementCooldown = 12;
+    document.getElementById('drunkHud').classList.add('hidden');
+    document.getElementById('drunkOverlay').classList.add('hidden');
+    document.getElementById('soberOverlay').classList.add('hidden');
+    document.getElementById('sleepOverlay').classList.add('hidden');
+    const hl = document.getElementById('hackerLayer');
+    hl.classList.add('hidden'); hl.innerHTML = '';
+    document.getElementById('chaosPopup').classList.add('hidden');
+    canvas.style.filter = '';
+    canvas.style.transform = '';
+}
+
+// ----- Per-mode dispatcher -----
+function updateModeFx(dt) {
+    if (state !== STATE.PLAYING) return;
+    if (mode === MODE.DRUNK) updateDrunkMode(dt);
+    else if (mode === MODE.BEE) updateBeeMode(dt);
+    else if (mode === MODE.POTATO) updatePotatoMode(dt);
+    else if (mode === MODE.BOSS) updateBossMode(dt);
+    else if (mode === MODE.REVERSE) updateReverseMode(dt);
+    else if (mode === MODE.CHAOS) updateChaosMode(dt);
+    else if (mode === MODE.HACKER) updateHackerMode(dt);
+    else if (mode === MODE.SLEEP) updateSleepMode(dt);
+
+    if (mode !== MODE.MARIO && state === STATE.PLAYING) maybeAchievement(dt);
+}
+
+function renderModeExtras() {
+    if (mode === MODE.DRUNK) renderDrunkExtras();
+    else if (mode === MODE.BEE) renderBeeExtras();
+    else if (mode === MODE.POTATO) renderPotatoExtras();
+    else if (mode === MODE.BOSS) renderBossExtras();
+    else if (mode === MODE.CHAOS) renderChaosExtras();
+    else if (mode === MODE.HACKER) drawSunglasses();
+    else if (mode === MODE.SLEEP) drawSleepyEye();
+}
+
+// ============================================================================
+// DRUNK MODE
+// ============================================================================
+function updateDrunkMode(dt) {
+    if (!modeFx.drunkActive) {
+        modeFx.wineTimer -= dt;
+        if (modeFx.wineTimer <= 0) {
+            spawnWineBottle();
+            modeFx.wineTimer = 4 + Math.random() * 4;
+        }
+    }
+    // Move wine bottles
+    const speed = SPEED_BASE + Math.min(220, distance / 6);
+    for (const w of wineBottles) {
+        w.x -= speed * dt;
+        w.t += dt;
+        w.y += Math.sin(w.t * 3) * 0.4;
+    }
+    wineBottles = wineBottles.filter(w => w.x > -50);
+    // Wine vs bird
+    for (const w of wineBottles) {
+        if (Math.hypot(w.x - bird.x, w.y - bird.y) < bird.r + 18) {
+            w.x = -9999;
+            triggerDrunk();
+        }
+    }
+
+    if (modeFx.drunkActive) {
+        modeFx.drunkTimer -= dt;
+        document.getElementById('drunkTimer').textContent = Math.max(0, Math.ceil(modeFx.drunkTimer));
+        document.getElementById('feetEaten').textContent = modeFx.feetEaten;
+        if (modeFx.drunkTimer <= 0) { gameOver('You stayed drunk forever.'); return; }
+
+        // Spawn lots of feet
+        modeFx.feetSpawnTimer -= dt;
+        if (modeFx.feetSpawnTimer <= 0) {
+            spawnGiantFoot();
+            modeFx.feetSpawnTimer = 0.18 + Math.random() * 0.18;
+        }
+        for (const f of giantFeet) {
+            f.x -= (200 + 80 * Math.sin(f.t * 4)) * dt;
+            f.y += Math.sin(f.t * 6) * 1.5;
+            f.t += dt;
+            f.rot += dt * 4 * f.spinDir;
+        }
+        giantFeet = giantFeet.filter(f => f.x > -60);
+        for (const f of giantFeet) {
+            if (Math.hypot(f.x - bird.x, f.y - bird.y) < bird.r + 32) {
+                f.x = -9999;
+                modeFx.feetEaten += 1;
+                spawnParticles(bird.x, bird.y, 5, '#ffcc99');
+                sfx.coin();
+                if (modeFx.feetEaten >= 200) soberUp();
+            }
+        }
+
+        // Drunk visual + bird wobble
+        modeFx.drunkPhase += dt * 4;
+        modeFx.rotate = Math.sin(modeFx.drunkPhase) * 6;
+        modeFx.blur = 2.2;
+        modeFx.scale = 1 + Math.sin(modeFx.drunkPhase * 0.7) * 0.04;
+        bird.vy += Math.sin(modeFx.drunkPhase * 3) * 60 * dt;
+    } else {
+        modeFx.rotate *= 0.9; modeFx.blur *= 0.9; modeFx.scale = 1 + (modeFx.scale - 1) * 0.9;
+    }
+}
+
+function spawnWineBottle() {
+    wineBottles.push({
+        x: W + 30, y: 90 + Math.random() * (H - GROUND_H - 160),
+        t: 0,
+    });
+}
+function spawnGiantFoot() {
+    giantFeet.push({
+        x: W + 60,
+        y: 60 + Math.random() * (H - GROUND_H - 120),
+        t: 0,
+        rot: Math.random() * Math.PI * 2,
+        spinDir: Math.random() < 0.5 ? -1 : 1,
+        scale: 1.2 + Math.random() * 0.7,
+    });
+}
+
+function triggerDrunk() {
+    if (modeFx.drunkActive) return;
+    modeFx.drunkActive = true;
+    modeFx.drunkTimer = 60;
+    modeFx.feetEaten = 0;
+    const overlay = document.getElementById('drunkOverlay');
+    overlay.classList.remove('hidden');
+    setTimeout(() => overlay.classList.add('hidden'), 1500);
+    document.getElementById('drunkHud').classList.remove('hidden');
+    sfx.surprise();
+    sfx.die(); // dramatic
+}
+
+function soberUp() {
+    modeFx.drunkActive = false;
+    modeFx.drunkTimer = 0;
+    document.getElementById('drunkHud').classList.add('hidden');
+    const sober = document.getElementById('soberOverlay');
+    sober.classList.remove('hidden');
+    sober.style.animation = 'none';
+    void sober.offsetHeight;
+    sober.style.animation = '';
+    setTimeout(() => sober.classList.add('hidden'), 1500);
+    coinsEarned += 30; // reward
+    sfx.surprise();
+}
+
+function renderDrunkExtras() {
+    for (const w of wineBottles) drawWineBottle(w.x, w.y);
+    for (const f of giantFeet)   drawGiantFoot(f);
+}
+
+function drawWineBottle(x, y) {
+    // Body
+    ctx.fillStyle = '#4a148c';
+    ctx.strokeStyle = '#1a1024';
+    ctx.lineWidth = 2;
+    ctx.fillRect(x - 9, y - 5, 18, 30);
+    ctx.strokeRect(x - 9, y - 5, 18, 30);
+    // Neck
+    ctx.fillRect(x - 4, y - 18, 8, 14);
+    ctx.strokeRect(x - 4, y - 18, 8, 14);
+    // Cork
+    ctx.fillStyle = '#8d6e63';
+    ctx.fillRect(x - 4, y - 22, 8, 5);
+    // Label
+    ctx.fillStyle = '#fff8e1';
+    ctx.fillRect(x - 9, y + 4, 18, 10);
+    ctx.strokeRect(x - 9, y + 4, 18, 10);
+    ctx.fillStyle = '#6a1b9a';
+    ctx.font = 'bold 7px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('WINE', x, y + 11);
+    ctx.textAlign = 'start';
+}
+
+function drawGiantFoot(f) {
+    ctx.save();
+    ctx.translate(f.x, f.y);
+    ctx.rotate(f.rot);
+    ctx.scale(f.scale, f.scale);
+    drawFootSprite(ctx);
+    ctx.restore();
+}
+
+// ============================================================================
+// BEE MODE
+// ============================================================================
+function updateBeeMode(dt) {
+    const targetCount = Math.min(60, 10 + Math.floor(distance / 5));
+    if (modeFx.bees.length < targetCount && Math.random() < dt * 6) {
+        modeFx.bees.push({
+            x: W + 30 + Math.random() * 80,
+            y: Math.random() * (H - GROUND_H - 20),
+            vx: -120 - Math.random() * 80,
+            vy: (Math.random() - 0.5) * 60,
+            t: Math.random() * Math.PI * 2,
+            r: 11,
+        });
+    }
+    for (const b of modeFx.bees) {
+        b.t += dt;
+        const dx = bird.x - b.x;
+        const dy = bird.y - b.y;
+        const d = Math.hypot(dx, dy) + 0.001;
+        b.vx += (dx / d) * 90 * dt;
+        b.vy += (dy / d) * 90 * dt;
+        b.vx = Math.max(-340, Math.min(180, b.vx));
+        b.vy = Math.max(-260, Math.min(260, b.vy));
+        b.x += b.vx * dt;
+        b.y += b.vy * dt + Math.sin(b.t * 14) * 0.6;
+    }
+    modeFx.bees = modeFx.bees.filter(b => b.x > -30 && b.x < W + 200);
+    for (const b of modeFx.bees) {
+        if (Math.hypot(b.x - bird.x, b.y - bird.y) < bird.r + b.r * 0.5) {
+            gameOver('Stung by bees!'); return;
+        }
+    }
+    modeFx.beeScreamTimer -= dt;
+    if (modeFx.beeScreamTimer <= 0) {
+        beep({ freq: 300 + Math.random() * 600, type: 'sawtooth', duration: 0.18, gain: 0.07, sweep: -200 });
+        modeFx.beeScreamTimer = 3 + Math.random() * 4;
+    }
+}
+
+function renderBeeExtras() {
+    for (const b of modeFx.bees) drawBee(b);
+}
+
+function drawBee(b) {
+    ctx.save();
+    ctx.translate(b.x, b.y);
+    // Body (yellow + black stripes)
+    ctx.fillStyle = '#fdd835';
+    ctx.beginPath(); ctx.ellipse(0, 0, 12, 8, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#212121';
+    ctx.fillRect(-8, -7, 3, 14);
+    ctx.fillRect(-1, -7, 3, 14);
+    ctx.fillRect(6, -7, 3, 14);
+    ctx.strokeStyle = '#4e342e'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.ellipse(0, 0, 12, 8, 0, 0, Math.PI * 2); ctx.stroke();
+    // Wings
+    const wing = Math.sin(b.t * 30) * 3;
+    ctx.fillStyle = 'rgba(220,240,255,0.85)';
+    ctx.beginPath(); ctx.ellipse(-2, -8 + wing, 7, 4, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(4, -8 + wing, 6, 3, 0, 0, Math.PI * 2); ctx.fill();
+    // Stinger
+    ctx.fillStyle = '#212121';
+    ctx.beginPath(); ctx.moveTo(-12, 0); ctx.lineTo(-18, -2); ctx.lineTo(-18, 2); ctx.fill();
+    // Tiny eye
+    ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.arc(8, -2, 1.5, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+}
+
+// ============================================================================
+// POTATO MODE
+// ============================================================================
+function updatePotatoMode(dt) {
+    modeFx.potatoRainTimer -= dt;
+    if (modeFx.potatoRainTimer <= 0) {
+        modeFx.potatoes.push({
+            x: Math.random() * W,
+            y: -30,
+            vy: 200 + Math.random() * 200,
+            vx: -60 + Math.random() * 120,
+            t: 0,
+            r: 14,
+            rot: Math.random() * Math.PI * 2,
+            spin: (Math.random() - 0.5) * 4,
+        });
+        modeFx.potatoRainTimer = 0.45 + Math.random() * 0.5;
+    }
+    for (const p of modeFx.potatoes) {
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        p.vy += 600 * dt;
+        p.t += dt;
+        p.rot += p.spin * dt;
+    }
+    modeFx.potatoes = modeFx.potatoes.filter(p => p.y < H + 40);
+    for (const p of modeFx.potatoes) {
+        if (Math.hypot(p.x - bird.x, p.y - bird.y) < bird.r + p.r) {
+            gameOver('Hit by a falling potato.'); return;
+        }
+    }
+}
+
+function renderPotatoExtras() {
+    for (const p of modeFx.potatoes) {
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rot);
+        drawPotato(0, 0, p.r);
+        ctx.restore();
+    }
+}
+
+function drawPotato(x, y, r) {
+    ctx.fillStyle = '#a1887f';
+    ctx.beginPath();
+    ctx.ellipse(x, y, r, r * 0.78, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#5d4037'; ctx.lineWidth = 2; ctx.stroke();
+    // Spots
+    ctx.fillStyle = '#5d4037';
+    [[r * 0.3, -r * 0.2], [-r * 0.4, r * 0.1], [r * 0.5, r * 0.3], [-r * 0.2, -r * 0.4]].forEach(([dx, dy]) => {
+        ctx.beginPath(); ctx.arc(x + dx, y + dy, r * 0.08, 0, Math.PI * 2); ctx.fill();
+    });
+    // Highlight
+    ctx.fillStyle = 'rgba(255,255,255,0.25)';
+    ctx.beginPath(); ctx.ellipse(x - r * 0.3, y - r * 0.3, r * 0.4, r * 0.18, 0, 0, Math.PI * 2); ctx.fill();
+}
+
+function drawPotatoEnemy(e) {
+    drawPotato(0, 0, 22);
+    // Angry potato face
+    ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.arc(-5, -3, 3.5, 0, Math.PI * 2); ctx.arc(6, -3, 3.5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#212121';
+    ctx.beginPath(); ctx.arc(-5, -3, 1.6, 0, Math.PI * 2); ctx.arc(6, -3, 1.6, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#212121'; ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(-9, -8); ctx.lineTo(-2, -6);
+    ctx.moveTo(11, -8); ctx.lineTo(4, -6);
+    ctx.stroke();
+    // Mouth
+    ctx.beginPath();
+    ctx.moveTo(-3, 7); ctx.lineTo(0, 4); ctx.lineTo(3, 7); ctx.lineTo(6, 4); ctx.stroke();
+}
+
+function drawPotatoBullet(b) {
+    ctx.rotate(b.spin * 0.3);
+    drawPotato(0, 0, b.r + 2);
+}
+
+// ============================================================================
+// BOSS MODE
+// ============================================================================
+function updateBossMode(dt) {
+    if (!modeFx.bossSpawned && distance > 4) {
+        spawnBoss();
+        modeFx.bossSpawned = true;
+    }
+    if (!modeFx.boss) return;
+    const b = modeFx.boss;
+    b.t += dt;
+    b.y = b.baseY + Math.sin(b.t * 1.4) * 80;
+
+    b.attackTimer -= dt;
+    if (b.attackTimer <= 0) {
+        b.projectiles.push({
+            x: b.x - 60, y: b.y,
+            vx: -340 - Math.random() * 100,
+            vy: (bird.y - b.y) * 0.4,
+            life: 4, r: 12,
+        });
+        b.attackTimer = 0.9 + Math.random() * 0.7;
+        sfx.shoot();
+    }
+    for (const p of b.projectiles) {
+        p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt;
+    }
+    b.projectiles = b.projectiles.filter(p => p.life > 0 && p.x > -50);
+    for (const p of b.projectiles) {
+        if (Math.hypot(p.x - bird.x, p.y - bird.y) < bird.r + p.r) {
+            gameOver('Hit by the boss!'); return;
+        }
+    }
+    if (bird.x + bird.r > b.x - 80 && bird.y > b.y - 80 && bird.y < b.y + 80) {
+        gameOver('Touched the boss. Bad idea.'); return;
+    }
+    // Bullets vs boss
+    for (const bullet of bullets) {
+        if (Math.abs(bullet.x - b.x) < 80 && Math.abs(bullet.y - b.y) < 80) {
+            b.hp -= bullet.damage;
+            bullet.life = 0;
+            spawnHitSplash(bullet.x, bullet.y, '#ff5252');
+            sfx.hit();
+            if (b.hp <= 0) { bossDefeated(); return; }
+        }
+    }
+}
+
+function spawnBoss() {
+    const types = ['foot', 'taxman', 'pigeon', 'microwave'];
+    const type = types[Math.floor(Math.random() * types.length)];
+    modeFx.boss = {
+        x: W - 110,
+        baseY: H * 0.4,
+        y: H * 0.4,
+        hp: 50, maxHp: 50,
+        type, t: 0,
+        attackTimer: 1.6,
+        projectiles: [],
+    };
+    showAchievement('Boss has appeared');
+}
+
+function bossDefeated() {
+    modeFx.bossKilled = true;
+    state = STATE.OVER;
+    save.coins += coinsEarned + 200;
+    persist();
+    finalDistance.textContent = Math.floor(distance);
+    finalCoins.textContent = coinsEarned + 200;
+    gameOverTitle.textContent = 'BOSS DEFEATED!';
+    gameOverMessage.textContent = 'You absolute legend.';
+    jailScene.classList.add('hidden');
+    hud.classList.add('hidden');
+    setHudMode('flap');
+    showScreen('over');
+    sfx.surprise();
+}
+
+function renderBossExtras() {
+    if (!modeFx.boss) return;
+    const b = modeFx.boss;
+    ctx.save();
+    ctx.translate(b.x, b.y);
+    if (b.type === 'foot') drawHugeFoot();
+    else if (b.type === 'taxman') drawHugeTaxman();
+    else if (b.type === 'pigeon') drawHugePigeon();
+    else if (b.type === 'microwave') drawHugeMicrowave();
+    ctx.restore();
+    for (const p of b.projectiles) {
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        const grad = ctx.createRadialGradient(0, 0, 1, 0, 0, p.r);
+        grad.addColorStop(0, '#fff'); grad.addColorStop(0.5, '#ff9800'); grad.addColorStop(1, '#b71c1c');
+        ctx.fillStyle = grad;
+        ctx.beginPath(); ctx.arc(0, 0, p.r, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = '#5d2f02'; ctx.lineWidth = 1.5; ctx.stroke();
+        ctx.restore();
+    }
+    // HP bar
+    const hpW = Math.min(280, W - 40), hpH = 14;
+    const hx = W / 2 - hpW / 2;
+    ctx.fillStyle = 'rgba(0,0,0,0.7)';
+    ctx.fillRect(hx, 12, hpW, hpH);
+    ctx.fillStyle = '#f44336';
+    ctx.fillRect(hx, 12, hpW * (b.hp / b.maxHp), hpH);
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.strokeRect(hx, 12, hpW, hpH);
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 11px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('GIANT ' + b.type.toUpperCase(), W / 2, 24);
+    ctx.textAlign = 'start';
+}
+
+function drawHugeFoot() {
+    // Big foot — reuse foot sprite scaled up
+    ctx.save();
+    ctx.scale(4, 4);
+    drawFootSprite(ctx);
+    ctx.restore();
+    // Angry eyes on the foot
+    ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.arc(0, -10, 12, 0, Math.PI * 2); ctx.arc(40, -10, 12, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#000'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = '#212121';
+    ctx.beginPath(); ctx.arc(2, -8, 5, 0, Math.PI * 2); ctx.arc(42, -8, 5, 0, Math.PI * 2); ctx.fill();
+}
+
+function drawHugeTaxman() {
+    // Giant suit man face
+    ctx.fillStyle = '#fdd0a2';
+    ctx.beginPath(); ctx.arc(0, 0, 70, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#5d4037'; ctx.lineWidth = 4; ctx.stroke();
+    ctx.fillStyle = '#3e2723';
+    ctx.beginPath(); ctx.arc(0, -50, 60, Math.PI, 0); ctx.fill();
+    // Glasses
+    ctx.strokeStyle = '#000'; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.arc(-22, -8, 16, 0, Math.PI * 2); ctx.arc(22, -8, 16, 0, Math.PI * 2); ctx.stroke();
+    ctx.fillStyle = 'rgba(33,33,33,0.55)';
+    ctx.beginPath(); ctx.arc(-22, -8, 14, 0, Math.PI * 2); ctx.arc(22, -8, 14, 0, Math.PI * 2); ctx.fill();
+    // Frown
+    ctx.strokeStyle = '#3e2723'; ctx.lineWidth = 5;
+    ctx.beginPath(); ctx.arc(0, 50, 18, Math.PI, 0); ctx.stroke();
+    // Mustache
+    ctx.fillStyle = '#3e2723';
+    ctx.beginPath();
+    ctx.ellipse(-12, 24, 14, 6, 0, 0, Math.PI * 2);
+    ctx.ellipse(12, 24, 14, 6, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Tax form floating around
+    ctx.fillStyle = '#fffde7';
+    ctx.fillRect(-90, -34, 24, 32);
+    ctx.strokeStyle = '#c62828'; ctx.lineWidth = 2;
+    ctx.strokeRect(-90, -34, 24, 32);
+    ctx.fillStyle = '#c62828';
+    ctx.font = 'bold 10px sans-serif';
+    ctx.fillText('TAX', -86, -16);
+}
+
+function drawHugePigeon() {
+    // Giant pigeon
+    ctx.fillStyle = '#90a4ae';
+    ctx.beginPath(); ctx.ellipse(0, 0, 70, 56, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#37474f'; ctx.lineWidth = 4; ctx.stroke();
+    // Head
+    ctx.fillStyle = '#cfd8dc';
+    ctx.beginPath(); ctx.arc(45, -34, 32, 0, Math.PI * 2); ctx.fill();
+    ctx.stroke();
+    // Beak
+    ctx.fillStyle = '#ff7043';
+    ctx.beginPath(); ctx.moveTo(75, -36); ctx.lineTo(100, -34); ctx.lineTo(75, -28); ctx.fill(); ctx.stroke();
+    // Eye (bloodshot)
+    ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.arc(52, -38, 9, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#b71c1c';
+    ctx.beginPath(); ctx.arc(54, -36, 4, 0, Math.PI * 2); ctx.fill();
+    // Wing
+    ctx.fillStyle = '#78909c';
+    ctx.beginPath();
+    ctx.moveTo(-30, 0); ctx.lineTo(-60, -30); ctx.lineTo(-50, 20); ctx.fill(); ctx.stroke();
+    // Feet
+    ctx.strokeStyle = '#ff7043'; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.moveTo(-20, 50); ctx.lineTo(-20, 70); ctx.moveTo(20, 50); ctx.lineTo(20, 70); ctx.stroke();
+}
+
+function drawHugeMicrowave() {
+    // Giant microwave
+    ctx.fillStyle = '#37474f';
+    ctx.fillRect(-90, -60, 180, 120);
+    ctx.strokeStyle = '#000'; ctx.lineWidth = 4; ctx.strokeRect(-90, -60, 180, 120);
+    // Door (window)
+    ctx.fillStyle = '#212121';
+    ctx.fillRect(-78, -48, 130, 96);
+    ctx.strokeRect(-78, -48, 130, 96);
+    // Mesh
+    ctx.strokeStyle = 'rgba(255,255,255,0.18)'; ctx.lineWidth = 1;
+    for (let xx = -78; xx <= 52; xx += 8) {
+        ctx.beginPath(); ctx.moveTo(xx, -48); ctx.lineTo(xx, 48); ctx.stroke();
+    }
+    for (let yy = -48; yy <= 48; yy += 8) {
+        ctx.beginPath(); ctx.moveTo(-78, yy); ctx.lineTo(52, yy); ctx.stroke();
+    }
+    // Glow inside (something is in there...)
+    ctx.fillStyle = 'rgba(255, 235, 59, 0.4)';
+    ctx.fillRect(-78, -48, 130, 96);
+    // Angry eyes inside
+    ctx.fillStyle = '#ff5252';
+    ctx.beginPath(); ctx.arc(-30, 0, 10, 0, Math.PI * 2); ctx.arc(20, 0, 10, 0, Math.PI * 2); ctx.fill();
+    // Control panel
+    ctx.fillStyle = '#cfd8dc';
+    ctx.fillRect(54, -48, 32, 96);
+    ctx.strokeRect(54, -48, 32, 96);
+    ctx.fillStyle = '#f44336';
+    ctx.fillRect(60, -40, 20, 16);
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 8px sans-serif';
+    ctx.fillText('999', 61, -28);
+    // Buttons
+    ctx.fillStyle = '#212121';
+    for (let r = 0; r < 3; r++) for (let c = 0; c < 2; c++) {
+        ctx.fillRect(62 + c * 10, -10 + r * 14, 6, 8);
+    }
+}
+
+// ============================================================================
+// REVERSE MODE
+// ============================================================================
+function updateReverseMode(dt) {
+    modeFx.flipY = true;
+    modeFx.reverseFlipTimer -= dt;
+    if (modeFx.reverseFlipTimer <= 0) {
+        modeFx.rotate = (modeFx.rotate + 180) % 360;
+        modeFx.reverseFlipTimer = 6 + Math.random() * 6;
+        showAchievement('Down is up.');
+    }
+}
+
+// ============================================================================
+// CHAOS MODE
+// ============================================================================
+function updateChaosMode(dt) {
+    // Tick raining feet always (may persist after the effect window ends)
+    if (modeFx.feetRain.length > 0) {
+        for (const f of modeFx.feetRain) {
+            f.x += f.vx * dt;
+            f.y += f.vy * dt;
+            f.vy += 600 * dt;
+            f.rot += f.spin * dt;
+            if (bird && Math.hypot(f.x - bird.x, f.y - bird.y) < bird.r + 20) {
+                f.x = -9999;
+                gameOver('Smashed by a falling foot.');
+                return;
+            }
+        }
+        modeFx.feetRain = modeFx.feetRain.filter(f => f.y < H + 40 && f.x > -50);
+    }
+
+    if (!modeFx.chaosEffect) {
+        modeFx.chaosTimer -= dt;
+        if (modeFx.chaosTimer <= 0) startChaosEffect();
+    } else {
+        modeFx.chaosEffectTimer -= dt;
+        applyChaosEffect(dt);
+        if (modeFx.chaosEffectTimer <= 0) {
+            endChaosEffect();
+            modeFx.chaosTimer = 1.8 + Math.random() * 3.5;
+        }
+    }
+}
+
+function startChaosEffect() {
+    const e = CHAOS_EFFECTS[Math.floor(Math.random() * CHAOS_EFFECTS.length)];
+    modeFx.chaosEffect = e;
+    modeFx.chaosEffectTimer = 2 + Math.random() * 3;
+    switch (e) {
+        case 'giantBird':
+            modeFx.savedBirdR = bird.r;
+            bird.r = bird.r * 1.8;
+            break;
+        case 'tinyBird':
+            modeFx.savedBirdR = bird.r;
+            bird.r = bird.r * 0.55;
+            break;
+        case 'hyperGravity': modeFx.chaosGravityMul = 2.5; break;
+        case 'moonGravity':  modeFx.chaosGravityMul = 0.35; break;
+        case 'invertColors': modeFx.invert = 1; break;
+        case 'spinning':     /* per-frame */ break;
+        case 'feetRain':     /* per-frame */ break;
+        case 'fakeError':
+            const popup = CHAOS_POPUPS[Math.floor(Math.random() * CHAOS_POPUPS.length)];
+            showChaosPopup(popup.t, popup.b);
+            modeFx.chaosEffectTimer = 0.3; // popup self-dismisses
+            break;
+    }
+    sfx.surprise();
+}
+
+function applyChaosEffect(dt) {
+    if (modeFx.chaosEffect === 'spinning') modeFx.rotate += dt * 90;
+    if (modeFx.chaosEffect === 'feetRain') {
+        if (Math.random() < dt * 12) {
+            modeFx.feetRain.push({
+                x: Math.random() * W,
+                y: -40,
+                vy: 220 + Math.random() * 240,
+                vx: -50 + Math.random() * 100,
+                rot: Math.random() * Math.PI * 2,
+                spin: (Math.random() - 0.5) * 6,
+                scale: 0.9 + Math.random() * 0.6,
+            });
+        }
+    }
+}
+
+function endChaosEffect() {
+    if (modeFx.chaosEffect === 'giantBird' || modeFx.chaosEffect === 'tinyBird') {
+        if (bird) bird.r = modeFx.savedBirdR;
+    }
+    modeFx.chaosEffect = null;
+    modeFx.chaosGravityMul = 1;
+    modeFx.invert = 0;
+    modeFx.rotate = 0;
+}
+
+function renderChaosExtras() {
+    for (const f of modeFx.feetRain) {
+        ctx.save();
+        ctx.translate(f.x, f.y);
+        ctx.rotate(f.rot);
+        ctx.scale(f.scale, f.scale);
+        drawFootSprite(ctx);
+        ctx.restore();
+    }
+}
+
+function showChaosPopup(title, body) {
+    const popup = document.getElementById('chaosPopup');
+    document.getElementById('chaosPopupTitle').textContent = title;
+    document.getElementById('chaosPopupBody').innerHTML = body.replace(/\n/g, '<br>');
+    popup.classList.remove('hidden');
+    popup.style.left = (10 + Math.random() * 60) + '%';
+    popup.style.top = (15 + Math.random() * 50) + '%';
+    popup.style.animation = 'none';
+    void popup.offsetHeight;
+    popup.style.animation = '';
+    setTimeout(() => popup.classList.add('hidden'), 2200);
+}
+
+// ============================================================================
+// FAKE HACKER MODE
+// ============================================================================
+function updateHackerMode(dt) {
+    modeFx.hackerPopupTimer -= dt;
+    if (modeFx.hackerPopupTimer <= 0) {
+        spawnHackerPopup();
+        modeFx.hackerPopupTimer = 1.2 + Math.random() * 2.5;
+    }
+}
+
+function spawnHackerPopup() {
+    const layer = document.getElementById('hackerLayer');
+    layer.classList.remove('hidden');
+    const msg = FAKE_HACK_MESSAGES[Math.floor(Math.random() * FAKE_HACK_MESSAGES.length)];
+    const win = document.createElement('div');
+    win.className = 'hacker-window';
+    win.style.left = (10 + Math.random() * Math.max(40, W - 260)) + 'px';
+    win.style.top  = (50 + Math.random() * Math.max(60, H - 240)) + 'px';
+    win.innerHTML = `
+        <div class="hacker-window-bar">terminal — bird@hacker</div>
+        <div class="hacker-window-body">${msg.replace(/\n/g, '<br>')}</div>
+    `;
+    layer.appendChild(win);
+    setTimeout(() => { if (win.parentNode) win.parentNode.removeChild(win); }, 4200);
+    beep({ freq: 1200, type: 'square', duration: 0.04, gain: 0.05 });
+}
+
+function drawSunglasses() {
+    if (!bird) return;
+    ctx.save();
+    ctx.translate(bird.x, bird.y);
+    ctx.rotate(bird.rot);
+    // Glasses bridge
+    ctx.fillStyle = '#000';
+    ctx.fillRect(-2, -8, 22, 5);
+    // Lenses
+    ctx.fillStyle = '#212121';
+    ctx.fillRect(-2, -7, 8, 7);
+    ctx.fillRect(10, -7, 8, 7);
+    // Lens shine
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    ctx.fillRect(-1, -6, 3, 2);
+    ctx.fillRect(11, -6, 3, 2);
+    ctx.restore();
+}
+
+// ============================================================================
+// SLEEP MODE
+// ============================================================================
+function updateSleepMode(dt) {
+    if (modeFx.asleep) {
+        modeFx.sleepWakeTime -= dt;
+        if (modeFx.sleepWakeTaps >= 5) {
+            // Awake!
+            modeFx.asleep = false;
+            document.getElementById('sleepOverlay').classList.add('hidden');
+            modeFx.sleepCheckTimer = 6 + Math.random() * 6;
+            sfx.surprise();
+        } else if (modeFx.sleepWakeTime <= 0) {
+            // Stayed asleep — bird is doomed.  Hide overlay; gravity handles it.
+            modeFx.asleep = false;
+            document.getElementById('sleepOverlay').classList.add('hidden');
+            // Ensure bird falls
+            if (bird) bird.vy = Math.max(bird.vy, 200);
+        }
+    } else {
+        modeFx.sleepCheckTimer -= dt;
+        if (modeFx.sleepCheckTimer <= 0) {
+            modeFx.asleep = true;
+            modeFx.sleepWakeTaps = 0;
+            modeFx.sleepWakeTime = 2.5;
+            document.getElementById('sleepOverlay').classList.remove('hidden');
+            beep({ freq: 100, type: 'sawtooth', duration: 0.5, gain: 0.1, sweep: -40 });
+        }
+    }
+}
+
+function drawSleepyEye() {
+    if (!modeFx.asleep || !bird) return;
+    ctx.save();
+    ctx.translate(bird.x, bird.y);
+    ctx.rotate(bird.rot);
+    // Cover the eye with closed eye (line)
+    ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.arc(8, -5, 7, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#000'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(2, -5); ctx.lineTo(14, -5); ctx.stroke();
+    ctx.restore();
+}
+
+// ----- Build mode grid + extra wiring on script load -----
+buildModeGrid();
 
 requestAnimationFrame(loop);

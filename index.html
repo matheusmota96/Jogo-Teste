@@ -29,23 +29,9 @@
         </div>
 
         <!-- Mode Selection Screen -->
-        <div id="modeScreen" class="screen">
+        <div id="modeScreen" class="screen mode-screen">
             <h2 class="title-small">SELECT MODE</h2>
-            <button class="mode-btn" id="classicModeBtn">
-                <div class="mode-icon"><div class="ico-target"></div></div>
-                <div class="mode-name">CLASSIC ADVANCED</div>
-                <div class="mode-desc">Infinite flight with enemies &amp; guns</div>
-            </button>
-            <button class="mode-btn tax-mode" id="taxModeBtn">
-                <div class="mode-icon"><div class="ico-doc"></div></div>
-                <div class="mode-name">TAX ESCAPE</div>
-                <div class="mode-desc">Run from auditors and the IRS!</div>
-            </button>
-            <button class="mode-btn mario-mode" id="marioModeBtn">
-                <div class="mode-icon"><div class="ico-mushroom"></div></div>
-                <div class="mode-name">SUPER BIRD BROS</div>
-                <div class="mode-desc">Platformer with power-ups &amp; levels</div>
-            </button>
+            <div class="mode-grid" id="modeGrid"></div>
             <button class="btn btn-back" id="backFromMode">← BACK</button>
         </div>
 
@@ -140,6 +126,58 @@
                 <div class="surprise-title" id="surpriseTitle">SURPRISE!</div>
                 <div class="surprise-text" id="surpriseText"></div>
             </div>
+        </div>
+
+        <!-- Loading tip overlay -->
+        <div id="loadingTip" class="loading-tip hidden">
+            <div class="loading-tip-card">
+                <div class="loading-tip-label">PRO TIP</div>
+                <div class="loading-tip-text" id="loadingTipText">Feet improve aerodynamics.</div>
+                <div class="loading-tip-loader"><div></div><div></div><div></div></div>
+            </div>
+        </div>
+
+        <!-- Drunk overlay -->
+        <div id="drunkOverlay" class="drunk-overlay hidden">
+            <div class="drunk-text">YOU'RE DRUNK</div>
+            <div class="drunk-sub">eat 200 feet to sober up</div>
+        </div>
+
+        <!-- Drunk HUD (timer + feet counter) -->
+        <div id="drunkHud" class="drunk-hud hidden">
+            <div class="drunk-hud-item">⏱ <span id="drunkTimer">60</span>s</div>
+            <div class="drunk-hud-item">🦶 <span id="feetEaten">0</span>/200</div>
+        </div>
+
+        <!-- Sober overlay -->
+        <div id="soberOverlay" class="sober-overlay hidden">
+            <div class="sober-text">YOU ARE SOBER AGAIN</div>
+        </div>
+
+        <!-- Sleep overlay -->
+        <div id="sleepOverlay" class="sleep-overlay hidden">
+            <div class="sleep-z z1">Z</div>
+            <div class="sleep-z z2">Z</div>
+            <div class="sleep-z z3">Z</div>
+            <div class="sleep-cta">TAP / SPACE TO WAKE UP!</div>
+        </div>
+
+        <!-- Hacker terminal popups -->
+        <div id="hackerLayer" class="hacker-layer hidden"></div>
+
+        <!-- Fake achievement toast -->
+        <div id="achievementToast" class="achievement-toast hidden">
+            <div class="achv-trophy"></div>
+            <div>
+                <div class="achv-label">ACHIEVEMENT UNLOCKED</div>
+                <div class="achv-text" id="achievementText">First steps</div>
+            </div>
+        </div>
+
+        <!-- Chaos popup (random fake error) -->
+        <div id="chaosPopup" class="chaos-popup hidden">
+            <div class="chaos-popup-bar"><span id="chaosPopupTitle">ERROR</span><span class="chaos-popup-close">×</span></div>
+            <div class="chaos-popup-body" id="chaosPopupBody">Something went wrong.</div>
         </div>
     </div>
 

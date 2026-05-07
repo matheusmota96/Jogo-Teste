@@ -41,7 +41,30 @@
                 <div class="mode-name">TAX ESCAPE</div>
                 <div class="mode-desc">Run from auditors and the IRS!</div>
             </button>
+            <button class="mode-btn mario-mode" id="marioModeBtn">
+                <div class="mode-icon"><div class="ico-mushroom"></div></div>
+                <div class="mode-name">SUPER BIRD BROS</div>
+                <div class="mode-desc">Platformer with power-ups &amp; levels</div>
+            </button>
             <button class="btn btn-back" id="backFromMode">← BACK</button>
+        </div>
+
+        <!-- Difficulty Selection Screen (Mario mode) -->
+        <div id="difficultyScreen" class="screen">
+            <h2 class="title-small">SELECT DIFFICULTY</h2>
+            <button class="diff-btn diff-easy" data-diff="easy">
+                <div class="diff-name">EASY</div>
+                <div class="diff-desc">Wide platforms, few enemies, mushroom power-up</div>
+            </button>
+            <button class="diff-btn diff-medium" data-diff="medium">
+                <div class="diff-name">MEDIUM</div>
+                <div class="diff-desc">Trickier jumps, fire flower available</div>
+            </button>
+            <button class="diff-btn diff-hard" data-diff="hard">
+                <div class="diff-name">HARD</div>
+                <div class="diff-desc">Tight platforms, many enemies, full skill</div>
+            </button>
+            <button class="btn btn-back" id="backFromDiff">← BACK</button>
         </div>
 
         <!-- Cutscene (Tax Escape intro) -->
@@ -61,13 +84,26 @@
         <!-- HUD (in-game) -->
         <div id="hud" class="hidden">
             <div class="hud-top">
-                <div class="hud-item">📏 <span id="distanceDisplay">0</span>m</div>
-                <div class="hud-item">💰 <span id="coinsDisplay">0</span></div>
-                <div class="hud-item">🔫 <span id="gunDisplay">Basic</span></div>
+                <div class="hud-item" id="hudDistance">📏 <span id="distanceDisplay">0</span>m</div>
+                <div class="hud-item" id="hudCoins">💰 <span id="coinsDisplay">0</span></div>
+                <div class="hud-item" id="hudGun">🔫 <span id="gunDisplay">Basic</span></div>
+                <div class="hud-item hidden" id="hudLives">❤️ <span id="livesDisplay">3</span></div>
+                <div class="hud-item hidden" id="hudPower">⭐ <span id="powerDisplay">Small</span></div>
             </div>
+            <button id="shootBtnLeft" class="shoot-btn shoot-btn-left" aria-label="Shoot Left">
+                <span class="shoot-ico"></span>
+            </button>
             <button id="shootBtn" class="shoot-btn" aria-label="Shoot">
                 <span class="shoot-ico"></span>
             </button>
+
+            <!-- Mario controls (only shown in Mario mode) -->
+            <div id="marioControls" class="mario-controls hidden">
+                <button class="m-btn m-left" id="mLeftBtn" aria-label="Move Left">◀</button>
+                <button class="m-btn m-right" id="mRightBtn" aria-label="Move Right">▶</button>
+                <button class="m-btn m-jump" id="mJumpBtn" aria-label="Jump">JUMP</button>
+                <button class="m-btn m-fire hidden" id="mFireBtn" aria-label="Fire">FIRE</button>
+            </div>
         </div>
 
         <!-- Game Over Screen -->

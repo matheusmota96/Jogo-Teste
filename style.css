@@ -339,6 +339,140 @@ html, body {
 .mode-btn.tax-mode {
     background: linear-gradient(180deg, #e57373, #c62828);
 }
+.mode-btn.mario-mode {
+    background: linear-gradient(180deg, #ffb74d, #ef6c00);
+}
+
+/* ---------------- Mushroom icon (Mario mode) ---------------- */
+.ico-mushroom {
+    position: relative;
+    width: 50px;
+    height: 50px;
+}
+.ico-mushroom::before {
+    /* cap */
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 60%;
+    background: radial-gradient(circle at 30% 40%, #ff8a65 0 12%, #d32f2f 12% 100%);
+    border: 3px solid #5d4037;
+    border-radius: 50% 50% 6px 6px / 100% 100% 6px 6px;
+    box-shadow: inset -6px -2px 0 rgba(0,0,0,0.2);
+}
+.ico-mushroom::after {
+    /* stem */
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 22%;
+    right: 22%;
+    height: 45%;
+    background: linear-gradient(180deg, #fff8e1, #ffcc80);
+    border: 3px solid #5d4037;
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+}
+
+/* ---------------- Difficulty screen ---------------- */
+.diff-btn {
+    width: min(360px, 90vw);
+    padding: 16px;
+    margin: 8px;
+    border: none;
+    border-radius: 14px;
+    color: #fff;
+    cursor: pointer;
+    font-family: inherit;
+    box-shadow: 0 5px 0 rgba(0, 0, 0, 0.3);
+    transition: transform 0.1s, box-shadow 0.1s;
+    text-align: center;
+}
+.diff-btn:active {
+    transform: translateY(3px);
+    box-shadow: 0 2px 0 rgba(0, 0, 0, 0.3);
+}
+.diff-btn.diff-easy   { background: linear-gradient(180deg, #66bb6a, #2e7d32); }
+.diff-btn.diff-medium { background: linear-gradient(180deg, #ffb74d, #ef6c00); }
+.diff-btn.diff-hard   { background: linear-gradient(180deg, #ef5350, #b71c1c); }
+.diff-name {
+    font-size: 24px;
+    font-weight: bold;
+    letter-spacing: 2px;
+    text-shadow: 1px 1px 0 rgba(0,0,0,0.4);
+}
+.diff-desc {
+    font-size: 13px;
+    opacity: 0.95;
+    margin-top: 3px;
+}
+
+/* ---------------- Mario controls ---------------- */
+.mario-controls {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+.mario-controls.hidden { display: none; }
+
+.m-btn {
+    position: absolute;
+    pointer-events: auto;
+    border: 3px solid #fff;
+    color: #fff;
+    font-size: 26px;
+    font-weight: bold;
+    font-family: inherit;
+    cursor: pointer;
+    box-shadow: 0 5px 0 rgba(0,0,0,0.4), 0 6px 14px rgba(0,0,0,0.3);
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.m-btn:active {
+    transform: translateY(3px);
+    box-shadow: 0 2px 0 rgba(0,0,0,0.4), 0 2px 6px rgba(0,0,0,0.3);
+}
+.m-left, .m-right {
+    bottom: 24px;
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #b0bec5, #455a64);
+}
+.m-left  { left: 24px; }
+.m-right { left: 110px; }
+.m-jump {
+    bottom: 24px;
+    right: 24px;
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #81c784, #2e7d32);
+    font-size: 22px;
+}
+.m-fire {
+    bottom: 110px;
+    right: 24px;
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #ff8a65, #d84315);
+    font-size: 18px;
+}
+.m-fire.hidden { display: none; }
+
+@media (max-width: 480px) {
+    .m-left, .m-right { width: 60px; height: 60px; }
+    .m-right { left: 92px; }
+    .m-jump { width: 78px; height: 78px; }
+    .m-fire { width: 60px; height: 60px; bottom: 96px; }
+}
 
 .mode-icon {
     font-size: 40px;
@@ -479,6 +613,16 @@ html, body {
 .shoot-btn:active {
     transform: translateY(4px);
     box-shadow: 0 1px 0 #7f0000, 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+.shoot-btn-left {
+    right: auto;
+    left: 24px;
+    background: radial-gradient(circle at 30% 30%, #4fc3f7, #0277bd);
+    box-shadow: 0 5px 0 #01579b, 0 6px 18px rgba(0, 0, 0, 0.4);
+}
+.shoot-btn-left:active {
+    box-shadow: 0 1px 0 #01579b, 0 2px 6px rgba(0, 0, 0, 0.4);
 }
 
 .shoot-ico {

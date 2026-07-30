@@ -59,11 +59,31 @@ export async function listCollaborators(): Promise<CollaboratorWithLatest[]> {
   });
 }
 
-/** Colaborador + historico completo de assessments. */
+/**
+ * Employee Hub: cadastro mestre do colaborador agregando dados de todos os
+ * modulos (DISC, cargo, gestor, historico, performance, PDI, onboarding, LMS).
+ */
 export async function getCollaborator(id: string) {
   assertDb();
   return prisma.collaborator.findUnique({
     where: { id },
-    include: { assessments: { orderBy: { createdAt: "desc" } } },
+    include: {
+      assessments: { orderBy: { createdAt: "desc" } },
+      position: true,
+      manager: { select: { id: true, name: true } },
+      reports: { select: { id: true, name: true } },
+      events: { orderBy: { date: "desc" } },
+      reviews: {
+        orderBy: { createdAt: "desc" },
+        take: 5,
+        include: { ratings: true },
+      },
+      pdis: { orderBy: { createdAt: "desc" }, include: { actions: true } },
+      enrollments: { include: { course: true }, orderBy: { createdAt: "desc" } },
+      onboardingPlans: {
+        orderBy: { createdAt: "desc" },
+        include: { tasks: true },
+      },
+    },
   });
 }

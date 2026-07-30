@@ -355,3 +355,164 @@ tbody tr:hover {
   background: var(--brand);
   transition: width 0.3s;
 }
+
+/* ---- Componentes compartilhados entre modulos ---- */
+
+/* Pills / status */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  background: #eef0f3;
+  color: var(--text);
+}
+.pill.green { background: #e7f6ee; color: #17663f; }
+.pill.red { background: #fdeaea; color: #a5262a; }
+.pill.amber { background: #fdf3e0; color: #7a5a00; }
+.pill.blue { background: #e8f0fe; color: #1d4ed8; }
+.pill.gray { background: #eef0f3; color: var(--muted); }
+
+/* Tabs */
+.tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 20px;
+}
+.tab {
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+}
+.tab.active {
+  color: var(--brand);
+  border-bottom-color: var(--brand);
+}
+
+/* Meter (barra generica 0-100) */
+.meter {
+  background: #eef0f3;
+  border-radius: 999px;
+  height: 8px;
+  overflow: hidden;
+}
+.meter > div {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--brand);
+  transition: width 0.4s ease;
+}
+
+/* Kanban (ATS pipeline) */
+.kanban {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+.kanban-col {
+  flex: 0 0 220px;
+  background: #f0f1f4;
+  border-radius: var(--radius);
+  padding: 10px;
+}
+.kanban-col h4 {
+  margin: 4px 6px 10px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  display: flex;
+  justify-content: space-between;
+}
+.kanban-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  box-shadow: var(--shadow);
+  font-size: 13px;
+}
+.kanban-card strong {
+  display: block;
+  font-size: 14px;
+}
+
+/* Nine Box (3x3) */
+.ninebox {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+.ninebox-cell {
+  border-radius: 10px;
+  padding: 12px;
+  min-height: 120px;
+  border: 1px solid var(--border);
+}
+.ninebox-cell .cell-title {
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.ninebox-cell.q-low { background: #fdeaea; }
+.ninebox-cell.q-mid { background: #fdf6e3; }
+.ninebox-cell.q-high { background: #e7f6ee; }
+.ninebox-name {
+  display: inline-block;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 12px;
+  margin: 2px 2px 0 0;
+}
+
+/* Listas simples com item + acao */
+.list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.list-item:last-child { border-bottom: none; }
+
+/* Checkbox de tarefa */
+.check-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+}
+.check-item.done { color: var(--muted); text-decoration: line-through; }
+
+/* textarea */
+.field textarea {
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  min-height: 72px;
+  resize: vertical;
+}
+
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 28px 0 12px;
+}
+.section-head h3 { margin: 0; }

@@ -1,9 +1,8 @@
-// Modulo 1: Mapeamento Comportamental (Profiler DISC)
+// Plataforma de RH (HRIS) — schema completo (todos os modulos)
 //
-// O resultado de cada Assessment forma o "DNA Comportamental" do colaborador,
-// consumido pelos demais modulos da plataforma (Engenharia de Cargos, ATS,
-// Performance, etc.). Por isso o modelo ja nasce pensando em multiplos tipos
-// de teste (DISC hoje; Big Five, motivacional e lideranca no roadmap).
+// O nucleo transversal e o "DNA Comportamental" (Assessment/DISC), consumido
+// por Engenharia de Cargos (fit ao cargo), ATS (score de aderencia),
+// Performance, Sucessao (Nine Box) e People Analytics.
 
 generator client {
   provider = "prisma-client-js"
@@ -14,16 +13,48 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Collaborator {
-  id          String   @id @default(cuid())
-  name        String
-  email       String   @unique
-  role        String? // cargo (texto livre por ora; vira FK p/ modulo Engenharia de Cargos)
-  department  String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+// ==========================================================================
+// Modulo 1 — Mapeamento Comportamental  +  Modulo 5 — Employee Hub (mestre)
+// ==========================================================================
 
-  assessments Assessment[]
+enum CollaboratorStatus {
+  ACTIVE
+  ON_LEAVE
+  TERMINATED
+}
+
+model Collaborator {
+  id         String             @id @default(cuid())
+  name       String
+  email      String             @unique
+  role       String? // texto legado (usar `position` para o cargo estruturado)
+  department String?
+  status     CollaboratorStatus @default(ACTIVE)
+
+  admissionDate DateTime?
+  salary        Float?
+
+  positionId String?
+  position   Position? @relation(fields: [positionId], references: [id])
+
+  managerId String?
+  manager   Collaborator?  @relation("Management", fields: [managerId], references: [id])
+  reports   Collaborator[] @relation("Management")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  assessments          Assessment[]
+  events               EmploymentEvent[]
+  onboardingPlans      OnboardingPlan[]
+  reviews              PerformanceReview[] @relation("Reviewee")
+  reviewsGiven         PerformanceReview[] @relation("Reviewer")
+  pdis                 Pdi[]
+  surveyResponses      SurveyResponse[]
+  recognitionsReceived Recognition[]       @relation("RecognitionTo")
+  recognitionsGiven    Recognition[]       @relation("RecognitionFrom")
+  objectives           Objective[]
+  enrollments          Enrollment[]
 
   @@map("collaborators")
 }
@@ -41,20 +72,424 @@ model Assessment {
   collaborator   Collaborator   @relation(fields: [collaboratorId], references: [id], onDelete: Cascade)
   type           AssessmentType @default(DISC)
 
-  // Perfil DISC normalizado (0-100 por fator) = nucleo do DNA Comportamental
   scoreD      Int
   scoreI      Int
   scoreS      Int
   scoreC      Int
-  primary     String // fator dominante: "D" | "I" | "S" | "C"
-  secondary   String // segundo fator
-  profileName String // arquetipo: Executor | Comunicador | Planejador | Analista
+  primary     String
+  secondary   String
+  profileName String
 
-  // Respostas cruas para auditoria / historico / recalculo futuro
   answers Json
 
   createdAt DateTime @default(now())
 
   @@index([collaboratorId])
   @@map("assessments")
+}
+
+enum EmploymentEventType {
+  ADMISSAO
+  PROMOCAO
+  AJUSTE_SALARIAL
+  MUDANCA_CARGO
+  TREINAMENTO
+  ADVERTENCIA
+  FERIAS
+  OUTRO
+}
+
+model EmploymentEvent {
+  id             String              @id @default(cuid())
+  collaboratorId String
+  collaborator   Collaborator        @relation(fields: [collaboratorId], references: [id], onDelete: Cascade)
+  type           EmploymentEventType
+  description    String
+  salaryValue    Float?
+  date           DateTime            @default(now())
+
+  @@index([collaboratorId])
+  @@map("employment_events")
+}
+
+// ==========================================================================
+// Modulo 2 — Engenharia de Cargos (Estrutura Organizacional)
+// ==========================================================================
+
+enum Seniority {
+  ESTAGIO
+  ASSISTENTE
+  ANALISTA_JR
+  ANALISTA_PL
+  ANALISTA_SR
+  COORDENADOR
+  GERENTE
+  DIRETOR
+}
+
+enum ContractType {
+  CLT
+  PJ
+  ESTAGIO
+  TEMPORARIO
+}
+
+model Position {
+  id           String       @id @default(cuid())
+  title        String
+  department   String
+  seniority    Seniority    @default(ANALISTA_PL)
+  contractType ContractType @default(CLT)
+  workSchedule String?
+  salaryMin    Float?
+  salaryMax    Float?
+
+  mission          String?
+  responsibilities String?
+  deliverables     String?
+  requirements     String?
+  benefits         String?
+
+  // Perfil comportamental ideal (integra com o Modulo 1)
+  idealD Int @default(50)
+  idealI Int @default(50)
+  idealS Int @default(50)
+  idealC Int @default(50)
+
+  parentId String?
+  parent   Position?  @relation("PositionHierarchy", fields: [parentId], references: [id])
+  children Position[] @relation("PositionHierarchy")
+
+  competencies  PositionCompetency[]
+  collaborators Collaborator[]
+  jobs          Job[]
+
+  createdAt DateTime @default(now())
+
+  @@map("positions")
+}
+
+enum CompetencyKind {
+  TECNICA
+  COMPORTAMENTAL
+}
+
+model PositionCompetency {
+  id         String         @id @default(cuid())
+  positionId String
+  position   Position       @relation(fields: [positionId], references: [id], onDelete: Cascade)
+  name       String
+  weight     Int            @default(5) // 1-10
+  kind       CompetencyKind @default(COMPORTAMENTAL)
+
+  @@map("position_competencies")
+}
+
+// ==========================================================================
+// Modulo 3 — Recrutamento e Selecao (ATS)
+// ==========================================================================
+
+enum JobStatus {
+  OPEN
+  PAUSED
+  CLOSED
+}
+
+model Job {
+  id         String    @id @default(cuid())
+  positionId String
+  position   Position  @relation(fields: [positionId], references: [id])
+  title      String
+  location   String?
+  status     JobStatus @default(OPEN)
+  openedAt   DateTime  @default(now())
+  closedAt   DateTime?
+
+  applications Application[]
+
+  @@map("jobs")
+}
+
+model Candidate {
+  id       String  @id @default(cuid())
+  name     String
+  email    String
+  phone    String?
+  linkedin String?
+
+  applications Application[]
+  createdAt    DateTime      @default(now())
+
+  @@map("candidates")
+}
+
+enum PipelineStage {
+  INSCRITO
+  TRIAGEM
+  TESTE_COMPORTAMENTAL
+  ENTREVISTA_RH
+  ENTREVISTA_GESTOR
+  CASE
+  OFERTA
+  CONTRATACAO
+  REPROVADO
+}
+
+model Application {
+  id          String        @id @default(cuid())
+  jobId       String
+  job         Job           @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  candidateId String
+  candidate   Candidate     @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  stage       PipelineStage @default(INSCRITO)
+  score       Int? // aderencia 0-100
+  discPrimary String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([jobId])
+  @@map("applications")
+}
+
+// ==========================================================================
+// Modulo 4 — Onboarding
+// ==========================================================================
+
+enum OnboardingStatus {
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum OnboardingCategory {
+  DOCUMENTO
+  ASSINATURA
+  TREINAMENTO
+  INTEGRACAO
+  EQUIPAMENTO
+  META
+}
+
+model OnboardingPlan {
+  id             String           @id @default(cuid())
+  collaboratorId String
+  collaborator   Collaborator     @relation(fields: [collaboratorId], references: [id], onDelete: Cascade)
+  startDate      DateTime         @default(now())
+  status         OnboardingStatus @default(IN_PROGRESS)
+
+  tasks     OnboardingTask[]
+  createdAt DateTime         @default(now())
+
+  @@map("onboarding_plans")
+}
+
+model OnboardingTask {
+  id       String             @id @default(cuid())
+  planId   String
+  plan     OnboardingPlan     @relation(fields: [planId], references: [id], onDelete: Cascade)
+  title    String
+  category OnboardingCategory @default(INTEGRACAO)
+  dueDay   Int                @default(30) // dentro dos primeiros 90 dias
+  done     Boolean            @default(false)
+
+  @@map("onboarding_tasks")
+}
+
+// ==========================================================================
+// Modulo 6 — Performance e Desenvolvimento
+// ==========================================================================
+
+enum ReviewType {
+  AUTO // autoavaliacao
+  NINETY // 90 graus
+  ONE_EIGHTY // 180 graus
+  THREE_SIXTY // 360 graus
+}
+
+enum ReviewStatus {
+  DRAFT
+  IN_PROGRESS
+  COMPLETED
+}
+
+model PerformanceReview {
+  id             String        @id @default(cuid())
+  collaboratorId String
+  collaborator   Collaborator  @relation("Reviewee", fields: [collaboratorId], references: [id], onDelete: Cascade)
+  reviewerId     String?
+  reviewer       Collaborator? @relation("Reviewer", fields: [reviewerId], references: [id])
+  type           ReviewType    @default(THREE_SIXTY)
+  cycle          String // ex: "2026-S1"
+  status         ReviewStatus  @default(COMPLETED)
+  overallScore   Float? // 1-5 (eixo desempenho do Nine Box)
+  potentialScore Float? // 1-5 (eixo potencial do Nine Box)
+  notes          String?
+
+  ratings   CompetencyRating[]
+  createdAt DateTime           @default(now())
+
+  @@index([collaboratorId])
+  @@map("performance_reviews")
+}
+
+model CompetencyRating {
+  id             String            @id @default(cuid())
+  reviewId       String
+  review         PerformanceReview @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  competencyName String
+  score          Float // 1-5
+
+  @@map("competency_ratings")
+}
+
+enum PdiStatus {
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+model Pdi {
+  id             String       @id @default(cuid())
+  collaboratorId String
+  collaborator   Collaborator @relation(fields: [collaboratorId], references: [id], onDelete: Cascade)
+  objective      String
+  status         PdiStatus    @default(IN_PROGRESS)
+
+  actions   PdiAction[]
+  createdAt DateTime    @default(now())
+
+  @@map("pdis")
+}
+
+model PdiAction {
+  id      String    @id @default(cuid())
+  pdiId   String
+  pdi     Pdi       @relation(fields: [pdiId], references: [id], onDelete: Cascade)
+  title   String
+  done    Boolean   @default(false)
+  dueDate DateTime?
+
+  @@map("pdi_actions")
+}
+
+// ==========================================================================
+// Modulo 7 — Retencao e Engajamento
+// ==========================================================================
+
+enum SurveyType {
+  CLIMA
+  ENPS
+  PULSE
+  EXPERIENCIA
+  DESLIGAMENTO
+}
+
+enum SurveyStatus {
+  OPEN
+  CLOSED
+}
+
+model Survey {
+  id       String       @id @default(cuid())
+  title    String
+  type     SurveyType   @default(ENPS)
+  status   SurveyStatus @default(OPEN)
+  question String?
+
+  responses SurveyResponse[]
+  createdAt DateTime         @default(now())
+
+  @@map("surveys")
+}
+
+model SurveyResponse {
+  id             String        @id @default(cuid())
+  surveyId       String
+  survey         Survey        @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  collaboratorId String?
+  collaborator   Collaborator? @relation(fields: [collaboratorId], references: [id])
+  score          Int // 0-10
+  comment        String?
+  createdAt      DateTime      @default(now())
+
+  @@index([surveyId])
+  @@map("survey_responses")
+}
+
+model Recognition {
+  id                 String        @id @default(cuid())
+  fromCollaboratorId String?
+  from               Collaborator? @relation("RecognitionFrom", fields: [fromCollaboratorId], references: [id])
+  toCollaboratorId   String
+  to                 Collaborator  @relation("RecognitionTo", fields: [toCollaboratorId], references: [id], onDelete: Cascade)
+  message            String
+  badge              String?
+  createdAt          DateTime      @default(now())
+
+  @@map("recognitions")
+}
+
+// ==========================================================================
+// Diferencial — Gestao de Metas (OKRs)
+// ==========================================================================
+
+enum OkrLevel {
+  COMPANY
+  AREA
+  INDIVIDUAL
+}
+
+model Objective {
+  id      String        @id @default(cuid())
+  title   String
+  level   OkrLevel      @default(COMPANY)
+  area    String?
+  ownerId String?
+  owner   Collaborator? @relation(fields: [ownerId], references: [id])
+  cycle   String // ex: "2026-Q3"
+
+  keyResults KeyResult[]
+  createdAt  DateTime    @default(now())
+
+  @@map("objectives")
+}
+
+model KeyResult {
+  id          String    @id @default(cuid())
+  objectiveId String
+  objective   Objective @relation(fields: [objectiveId], references: [id], onDelete: Cascade)
+  title       String
+  progress    Int       @default(0) // 0-100
+
+  @@map("key_results")
+}
+
+// ==========================================================================
+// Diferencial — LMS (Learning Management System)
+// ==========================================================================
+
+model Course {
+  id          String  @id @default(cuid())
+  title       String
+  category    String?
+  hours       Int     @default(1)
+  description String?
+
+  enrollments Enrollment[]
+  createdAt   DateTime     @default(now())
+
+  @@map("courses")
+}
+
+model Enrollment {
+  id             String       @id @default(cuid())
+  courseId       String
+  course         Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  collaboratorId String
+  collaborator   Collaborator @relation(fields: [collaboratorId], references: [id], onDelete: Cascade)
+  progress       Int          @default(0) // 0-100
+  completedAt    DateTime?
+  createdAt      DateTime     @default(now())
+
+  @@unique([courseId, collaboratorId])
+  @@map("enrollments")
 }

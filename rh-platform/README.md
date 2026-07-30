@@ -1,42 +1,32 @@
-# Plataforma de RH (HRIS) — Módulo 1: Mapeamento Comportamental
+# Plataforma de RH (HRIS)
 
-MVP funcional do **primeiro módulo** da plataforma: o **Profiler DISC**, que gera
-o **DNA Comportamental** de cada colaborador. Esse DNA é a base consumida por
-todos os módulos seguintes (Engenharia de Cargos, ATS, Performance, etc.).
+Plataforma completa de gestão de pessoas orientada a dados — do mapeamento
+comportamental ao People Analytics. O núcleo transversal é o **DNA
+Comportamental** (Profiler DISC), consumido pelos demais módulos.
 
 Stack: **Next.js 15 (App Router) + TypeScript + Prisma + Postgres**.
 
 ---
 
-## O que já está implementado
+## Módulos implementados
 
-| Recurso | Status |
-| --- | --- |
-| Cadastro de colaboradores (CRUD básico) | ✅ |
-| Questionário DISC de escolha forçada (20 grupos) | ✅ |
-| Motor de scoring DISC (normalização 0–100, primário/secundário, arquétipo) | ✅ |
-| DNA Comportamental por colaborador + histórico de testes | ✅ |
-| Compatibilidade comportamental entre dois colaboradores | ✅ |
-| Dashboard (cobertura de mapeamento + distribuição por perfil) | ✅ |
-| API REST (`/api/collaborators`, `/api/assessments`) | ✅ |
-| Seed com 5 perfis de exemplo | ✅ |
-| Testes do motor de scoring (`npm run test:disc`) | ✅ |
+| # | Módulo | Rota | Destaques |
+| - | --- | --- | --- |
+| 1 | **Mapeamento Comportamental** | `/colaboradores`, `/profiler`, `/comparar` | Profiler DISC (20 grupos), scoring 0–100, arquétipos, compatibilidade entre perfis |
+| 2 | **Engenharia de Cargos** | `/cargos` | Descrição, roda de competências, perfil DISC ideal, organograma, **fit colaborador × cargo** |
+| 3 | **Recrutamento (ATS)** | `/recrutamento` | Vaga a partir do cargo, pipeline Kanban (9 etapas), score de aderência, KPIs |
+| 4 | **Onboarding** | `/onboarding` | Plano dos primeiros 90 dias, checklist por categoria, progresso |
+| 5 | **Employee Hub** | `/colaboradores/[id]` | Cadastro mestre: dados, DNA, cargo/gestor, histórico, performance, PDI, LMS |
+| 6 | **Performance & PDI** | `/performance` | Avaliações 90/180/360 + auto, competências, PDI com plano de ação, KPIs |
+| 7 | **Retenção & Engajamento** | `/engajamento` | Pesquisas (clima, eNPS, pulse), cálculo de eNPS, mural de reconhecimento |
+| 8 | **People Analytics** | `/analytics` | Painel executivo: headcount, turnover, eNPS, performance, risco, distribuições |
+| ★ | **Metas (OKRs)** | `/okrs` | Objetivos por empresa/área/indivíduo, key results com progresso |
+| ★ | **Sucessão (Nine Box)** | `/nine-box` | Matriz 9-Box desempenho × potencial, identificação de HiPos |
+| ★ | **LMS (Treinamentos)** | `/lms` | Catálogo de cursos, matrículas, progresso e conclusão |
 
----
-
-## Metodologia DISC
-
-Questionário de **escolha forçada**: em cada grupo de 4 adjetivos (um por fator
-D, I, S, C) o respondente marca o que **mais** e o que **menos** combina com ele.
-
-Scoring (`src/lib/disc/score.ts`):
-
-- `mais` → +1 no fator; `menos` → −1 no fator.
-- Bruto por fator varia em `[-n, +n]`; normaliza para **0–100** via `(bruto + n) / (2n)`.
-- **Primário** = fator de maior score; **secundário** = segundo. Empates seguem a
-  ordem canônica D > I > S > C.
-- Arquétipos: **D = Executor**, **I = Comunicador**, **S = Planejador**, **C = Analista**.
-- `compatibility(a, b)` = `100 − (distância média entre os 4 fatores)`.
+Todos os módulos leem/escrevem no mesmo banco e reaproveitam o DNA
+Comportamental (ex.: o *fit ao cargo* e o *score de aderência* do ATS usam a
+função `compatibility()` do Módulo 1).
 
 ---
 
@@ -46,25 +36,28 @@ Scoring (`src/lib/disc/score.ts`):
 cd rh-platform
 npm install
 
-# 1. Configurar o banco
-cp .env.example .env
-#   edite DATABASE_URL (Postgres local ou Vercel Postgres/Neon)
-
-# 2. Criar as tabelas
-npm run db:push
-
-# 3. Popular dados de exemplo (opcional)
-npm run db:seed
-
-# 4. Subir a aplicação
-npm run dev      # http://localhost:3000
+cp .env.example .env          # ajuste DATABASE_URL (Postgres local ou Vercel/Neon)
+npm run db:push               # cria as tabelas
+npm run db:seed               # popula dados de exemplo (todos os módulos)
+npm run dev                   # http://localhost:3000
 ```
 
-Verificar o motor de scoring sem precisar de banco:
+Verificar o motor de scoring DISC sem banco:
 
 ```bash
 npm run test:disc
 ```
+
+---
+
+## Metodologia DISC (Módulo 1)
+
+Questionário de **escolha forçada**: em cada grupo de 4 adjetivos (um por fator
+D, I, S, C) marca-se o que **mais** e o que **menos** combina. Scoring em
+`src/lib/disc/score.ts`: `mais` +1 / `menos` −1 por fator; normalização
+`(bruto + n) / (2n)` → 0–100; primário/secundário; arquétipos (D=Executor,
+I=Comunicador, S=Planejador, C=Analista). `compatibility(a, b)` = `100 −
+distância média entre os 4 fatores`.
 
 ---
 
@@ -73,50 +66,35 @@ npm run test:disc
 ```
 rh-platform/
 ├── prisma/
-│   ├── schema.prisma          # Collaborator + Assessment (DNA Comportamental)
-│   └── seed.ts                # 5 colaboradores de exemplo
-├── src/
-│   ├── lib/
-│   │   ├── db.ts              # Prisma singleton
-│   │   ├── collaborators.ts   # camada de acesso a dados
-│   │   └── disc/
-│   │       ├── types.ts       # tipos do domínio
-│   │       ├── questions.ts   # 20 grupos do questionário
-│   │       ├── score.ts       # motor de scoring + compatibilidade
-│   │       └── verify.ts      # testes do motor
-│   ├── components/            # DiscBars, DiscBadge, DbNotice
-│   └── app/
-│       ├── page.tsx           # dashboard
-│       ├── colaboradores/     # lista + detalhe (DNA)
-│       ├── profiler/          # aplicação do teste
-│       ├── comparar/          # compatibilidade
-│       └── api/               # rotas REST
+│   ├── schema.prisma        # todos os modelos (11 módulos)
+│   └── seed.ts              # dados de exemplo end-to-end
+└── src/
+    ├── lib/
+    │   ├── db.ts            # Prisma singleton
+    │   ├── collaborators.ts # Employee Hub (agrega todos os módulos)
+    │   ├── analytics.ts     # People Analytics + Nine Box
+    │   ├── positions.ts · recruitment.ts · onboarding.ts
+    │   ├── performance.ts · engagement.ts · okr.ts · lms.ts
+    │   └── disc/            # motor DISC + testes
+    ├── components/          # DiscBars, DiscBadge, DbNotice
+    └── app/
+        ├── page.tsx         # dashboard
+        ├── colaboradores/ cargos/ recrutamento/ onboarding/
+        ├── performance/ engajamento/ analytics/
+        ├── okrs/ nine-box/ lms/
+        └── api/             # rotas REST de cada módulo
 ```
 
 ---
 
-## Modelo de dados
+## Roadmap — IA para RH
 
-`Assessment` guarda o perfil normalizado (`scoreD/I/S/C`, `primary`, `secondary`,
-`profileName`) **e** as respostas cruas (`answers` em JSON) para auditoria e
-recálculo futuro. O enum `AssessmentType` já prevê `BIG_FIVE`, `MOTIVATIONAL` e
-`LEADERSHIP` — os próximos instrumentos do módulo.
+Camada de IA prevista (requer integração com um provedor de LLM):
+geração automática de descrições de cargo, sugestão de competências, triagem e
+resumo de currículos, match inteligente candidato × vaga, sugestão de PDIs e
+assistente de RH por chat. A modelagem já suporta esses fluxos (competências,
+perfis, respostas cruas dos testes ficam persistidas para reuso).
 
----
-
-## Como este módulo alimenta a plataforma
-
-O DNA Comportamental é o insumo transversal do HRIS:
-
-- **Engenharia de Cargos** — cada cargo terá um *perfil DISC ideal*; comparar
-  com o DNA do colaborador dá o **fit colaborador × cargo** (reusa `compatibility()`).
-- **Recrutamento (ATS)** — compõe o *score de aderência* do candidato à vaga.
-- **Performance & PDI** — sugestões de desenvolvimento a partir do perfil.
-- **Gestão de equipes** — compatibilidade gestor × liderado (já demonstrada em "Comparar perfis").
-
-## Próximos passos sugeridos
-
-1. Autenticação e multi-tenant (empresa).
-2. Perfil DISC ideal por cargo (ponte para Engenharia de Cargos).
-3. Big Five e perfil motivacional (novos `AssessmentType`).
-4. Link público de teste para candidatos (integração com ATS).
+Outros próximos passos: autenticação e multi-tenant (empresa), divulgação
+automática de vagas (job boards), e novos instrumentos comportamentais
+(`AssessmentType` já prevê Big Five, motivacional e liderança).

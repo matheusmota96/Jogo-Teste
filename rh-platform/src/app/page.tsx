@@ -38,10 +38,12 @@ export default async function HomePage() {
       <div className="row-between">
         <div>
           <h1 className="page-title">Visao geral</h1>
-          <p className="page-subtitle">Modulo 1 · Mapeamento Comportamental (DISC)</p>
+          <p className="page-subtitle">
+            Plataforma de RH · do mapeamento comportamental ao People Analytics
+          </p>
         </div>
-        <Link className="btn" href="/profiler">
-          + Aplicar Profiler
+        <Link className="btn" href="/analytics">
+          People Analytics →
         </Link>
       </div>
 

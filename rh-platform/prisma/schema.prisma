@@ -1,0 +1,60 @@
+// Modulo 1: Mapeamento Comportamental (Profiler DISC)
+//
+// O resultado de cada Assessment forma o "DNA Comportamental" do colaborador,
+// consumido pelos demais modulos da plataforma (Engenharia de Cargos, ATS,
+// Performance, etc.). Por isso o modelo ja nasce pensando em multiplos tipos
+// de teste (DISC hoje; Big Five, motivacional e lideranca no roadmap).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Collaborator {
+  id          String   @id @default(cuid())
+  name        String
+  email       String   @unique
+  role        String? // cargo (texto livre por ora; vira FK p/ modulo Engenharia de Cargos)
+  department  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  assessments Assessment[]
+
+  @@map("collaborators")
+}
+
+enum AssessmentType {
+  DISC
+  BIG_FIVE
+  MOTIVATIONAL
+  LEADERSHIP
+}
+
+model Assessment {
+  id             String         @id @default(cuid())
+  collaboratorId String
+  collaborator   Collaborator   @relation(fields: [collaboratorId], references: [id], onDelete: Cascade)
+  type           AssessmentType @default(DISC)
+
+  // Perfil DISC normalizado (0-100 por fator) = nucleo do DNA Comportamental
+  scoreD      Int
+  scoreI      Int
+  scoreS      Int
+  scoreC      Int
+  primary     String // fator dominante: "D" | "I" | "S" | "C"
+  secondary   String // segundo fator
+  profileName String // arquetipo: Executor | Comunicador | Planejador | Analista
+
+  // Respostas cruas para auditoria / historico / recalculo futuro
+  answers Json
+
+  createdAt DateTime @default(now())
+
+  @@index([collaboratorId])
+  @@map("assessments")
+}

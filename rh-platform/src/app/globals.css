@@ -516,3 +516,90 @@ tbody tr:hover {
   margin: 28px 0 12px;
 }
 .section-head h3 { margin: 0; }
+
+/* ---- Autenticacao (login / cadastro) ---- */
+.auth-shell {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: linear-gradient(160deg, #0b0b2b 0%, #14204a 55%, #123f37 100%);
+}
+.auth-card {
+  background: var(--surface);
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+  padding: 32px;
+  width: 100%;
+  max-width: 400px;
+}
+.auth-logo {
+  margin-bottom: 20px;
+}
+.auth-title {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 0 0 4px;
+}
+.auth-subtitle {
+  color: var(--muted);
+  font-size: 14px;
+  margin: 0 0 22px;
+}
+.auth-error {
+  background: #fdeaea;
+  color: #a5262a;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 13px;
+  margin: 0 0 14px;
+}
+.auth-alt {
+  text-align: center;
+  font-size: 14px;
+  color: var(--muted);
+  margin: 18px 0 0;
+}
+.auth-alt a {
+  color: var(--brand);
+  font-weight: 600;
+}
+
+/* ---- Rodape da sidebar (usuario + logout) ---- */
+.sidebar-user {
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid #22273f;
+}
+.sidebar-user-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.sidebar-user-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.logout-btn {
+  width: 100%;
+  background: transparent;
+  border: 1px solid #2b3150;
+  color: #cdd2e0;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.logout-btn:hover {
+  background: #1c2136;
+}

@@ -10,7 +10,6 @@ export default function LoginPage() {
         <Logo height={40} tone="dark" />
       </div>
       <h1 className="auth-title">Entrar na plataforma</h1>
-      <p className="auth-subtitle">Acesse sua conta B4you RH.</p>
       <LoginForm />
     </div>
   );

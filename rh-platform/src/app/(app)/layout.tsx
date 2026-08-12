@@ -16,6 +16,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <small>HRIS orientado a dados</small>
         </div>
 
+        <Link className="nav-link" href="/dashboard">
+          Dashboard
+        </Link>
         <Link className="nav-link" href="/">
           Visao geral
         </Link>

@@ -51,9 +51,10 @@ model Collaborator {
   department String?
   status     CollaboratorStatus @default(ACTIVE)
 
-  birthDate     DateTime?
-  admissionDate DateTime?
-  salary        Float?
+  birthDate       DateTime?
+  admissionDate   DateTime?
+  terminationDate DateTime?
+  salary          Float?
 
   // Empresa(s) do grupo a que o colaborador pertence.
   companies Company[] @relation("CollaboratorCompanies")

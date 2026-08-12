@@ -118,12 +118,34 @@ export default async function CollaboratorDetailPage({
             </div>
           </div>
           <div>
-            <div className="stat-label">Liderados</div>
-            <div>{collaborator.reports.length}</div>
+            <div className="stat-label">Empresa</div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+              {collaborator.companies.length > 0 ? (
+                collaborator.companies.map((c) => (
+                  <span key={c.id} className="pill blue">
+                    {c.name}
+                  </span>
+                ))
+              ) : (
+                <span>-</span>
+              )}
+            </div>
           </div>
           <div>
             <div className="stat-label">Departamento</div>
             <div>{collaborator.department ?? "-"}</div>
+          </div>
+          <div>
+            <div className="stat-label">Nascimento</div>
+            <div>
+              {collaborator.birthDate
+                ? collaborator.birthDate.toLocaleDateString("pt-BR")
+                : "-"}
+            </div>
+          </div>
+          <div>
+            <div className="stat-label">Liderados</div>
+            <div>{collaborator.reports.length}</div>
           </div>
         </div>
       </div>

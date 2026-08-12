@@ -44,6 +44,7 @@ export default async function CollaboratorsPage() {
                 <th>Nome</th>
                 <th>Cargo</th>
                 <th>Departamento</th>
+                <th>Empresa</th>
                 <th>Perfil DISC</th>
                 <th></th>
               </tr>
@@ -61,6 +62,19 @@ export default async function CollaboratorsPage() {
                   </td>
                   <td className="muted">{c.role ?? "-"}</td>
                   <td className="muted">{c.department ?? "-"}</td>
+                  <td>
+                    {c.companies.length > 0 ? (
+                      <span style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+                        {c.companies.map((name) => (
+                          <span key={name} className="pill blue">
+                            {name}
+                          </span>
+                        ))}
+                      </span>
+                    ) : (
+                      <span className="muted">-</span>
+                    )}
+                  </td>
                   <td>
                     {c.latest ? (
                       <DiscBadge primary={c.latest.primary} label={c.latest.profileName} />

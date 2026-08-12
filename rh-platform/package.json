@@ -12,6 +12,7 @@
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
     "db:seed": "tsx prisma/seed.ts",
+    "db:seed:team": "tsx prisma/seed-team.ts",
     "test:disc": "tsx src/lib/disc/verify.ts"
   },
   "prisma": {

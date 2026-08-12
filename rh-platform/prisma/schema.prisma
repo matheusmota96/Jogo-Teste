@@ -51,8 +51,12 @@ model Collaborator {
   department String?
   status     CollaboratorStatus @default(ACTIVE)
 
+  birthDate     DateTime?
   admissionDate DateTime?
   salary        Float?
+
+  // Empresa(s) do grupo a que o colaborador pertence.
+  companies Company[] @relation("CollaboratorCompanies")
 
   positionId String?
   position   Position? @relation(fields: [positionId], references: [id])
@@ -77,6 +81,17 @@ model Collaborator {
   enrollments          Enrollment[]
 
   @@map("collaborators")
+}
+
+// Empresas do grupo (B4You, Acelera Marca, Brands) + o proprio grupo.
+model Company {
+  id            String         @id @default(cuid())
+  name          String         @unique
+  isGroup       Boolean        @default(false)
+  createdAt     DateTime       @default(now())
+  collaborators Collaborator[] @relation("CollaboratorCompanies")
+
+  @@map("companies")
 }
 
 enum AssessmentType {

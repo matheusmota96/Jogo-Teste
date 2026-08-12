@@ -7,6 +7,7 @@ export type CollaboratorWithLatest = {
   email: string;
   role: string | null;
   department: string | null;
+  companies: string[];
   latest: {
     id: string;
     scores: DiscScore;
@@ -34,6 +35,7 @@ export async function listCollaborators(): Promise<CollaboratorWithLatest[]> {
     orderBy: { name: "asc" },
     include: {
       assessments: { orderBy: { createdAt: "desc" }, take: 1 },
+      companies: { select: { name: true } },
     },
   });
 
@@ -45,6 +47,7 @@ export async function listCollaborators(): Promise<CollaboratorWithLatest[]> {
       email: c.email,
       role: c.role,
       department: c.department,
+      companies: c.companies.map((x) => x.name),
       latest: a
         ? {
             id: a.id,
@@ -69,6 +72,7 @@ export async function getCollaborator(id: string) {
     where: { id },
     include: {
       assessments: { orderBy: { createdAt: "desc" } },
+      companies: { select: { id: true, name: true } },
       position: true,
       manager: { select: { id: true, name: true } },
       reports: { select: { id: true, name: true } },

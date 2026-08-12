@@ -16,11 +16,11 @@ export function Logo({
   return (
     <svg
       height={height}
-      viewBox="0 0 210 64"
+      viewBox="0 0 262 64"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       role="img"
-      aria-label="B4you"
+      aria-label="RH B4you"
     >
       {/* Simbolo: quadrado arredondado com "+" */}
       <rect x="0" y="8" width="48" height="48" rx="13" fill={teal} />
@@ -33,9 +33,9 @@ export function Logo({
         fontFamily="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif"
         fontWeight="800"
         fontSize="40"
-        letterSpacing="-1"
+        letterSpacing="-1.5"
       >
-        <tspan fill={ink}>B</tspan>
+        <tspan fill={ink}>RH B</tspan>
         <tspan fill={teal}>4</tspan>
         <tspan fill={ink}>you</tspan>
       </text>

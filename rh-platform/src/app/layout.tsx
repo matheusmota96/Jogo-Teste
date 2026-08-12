@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "B4you · Plataforma RH",
+  title: "RH B4you · Plataforma",
   description: "Plataforma completa de gestao de pessoas orientada a dados",
 };
 

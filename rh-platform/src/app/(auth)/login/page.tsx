@@ -1,7 +1,7 @@
 import { Logo } from "@/components/Logo";
 import { LoginForm } from "./LoginForm";
 
-export const metadata = { title: "Entrar · B4you RH" };
+export const metadata = { title: "Entrar · RH B4you" };
 
 export default function LoginPage() {
   return (

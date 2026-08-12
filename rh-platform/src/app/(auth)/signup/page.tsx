@@ -1,7 +1,7 @@
 import { Logo } from "@/components/Logo";
 import { SignupForm } from "./SignupForm";
 
-export const metadata = { title: "Criar conta · B4you RH" };
+export const metadata = { title: "Criar conta · RH B4you" };
 
 export default function SignupPage() {
   return (

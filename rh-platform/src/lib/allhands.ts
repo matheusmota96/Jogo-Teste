@@ -57,6 +57,55 @@ export async function listAllHands(): Promise<AllHandsItem[]> {
   });
 }
 
+const EVENT_TYPE_LABELS: Record<string, string> = {
+  CAFE_DA_MANHA: "Cafe da manha",
+  CONFRATERNIZACAO: "Confraternizacao",
+  EVENTO: "Evento",
+};
+
+export type UpcomingEvent = {
+  id: string;
+  date: Date;
+  title: string;
+  typeLabel: string;
+  kind: "allhands" | "evento";
+  daysUntil: number;
+};
+
+/** Proximos eventos da empresa (all hands + eventos B4you) a partir de hoje. */
+export async function getUpcomingCompanyEvents(limit = 5): Promise<UpcomingEvent[]> {
+  if (!isDbConfigured) return [];
+  const now = new Date();
+  const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+
+  const [ahs, evs] = await Promise.all([
+    prisma.allHands.findMany({ where: { date: { gte: start } }, orderBy: { date: "asc" } }),
+    prisma.companyEvent.findMany({ where: { date: { gte: start } }, orderBy: { date: "asc" } }),
+  ]);
+
+  const merged: UpcomingEvent[] = [
+    ...ahs.map((a) => ({
+      id: a.id,
+      date: a.date,
+      title: a.title ?? "All Hands",
+      typeLabel: "All Hands",
+      kind: "allhands" as const,
+      daysUntil: daysUntil(a.date),
+    })),
+    ...evs.map((e) => ({
+      id: e.id,
+      date: e.date,
+      title: e.title,
+      typeLabel: EVENT_TYPE_LABELS[e.type] ?? "Evento",
+      kind: "evento" as const,
+      daysUntil: daysUntil(e.date),
+    })),
+  ];
+
+  merged.sort((a, b) => a.date.getTime() - b.date.getTime());
+  return merged.slice(0, limit);
+}
+
 /** Proximo all hands (data >= hoje), para exibir no Dashboard. */
 export async function getNextAllHands(): Promise<{ date: Date; title: string | null; daysUntil: number } | null> {
   if (!isDbConfigured) return null;

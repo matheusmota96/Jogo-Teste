@@ -1,7 +1,12 @@
 import Link from "next/link";
 import { DbNotice } from "@/components/DbNotice";
 import { DbUnavailableError } from "@/lib/collaborators";
-import { getNextAllHands, formatFullDate, whenLabel as ahWhenLabel } from "@/lib/allhands";
+import {
+  getUpcomingCompanyEvents,
+  formatFullDate,
+  formatShortDate,
+  whenLabel as ahWhenLabel,
+} from "@/lib/allhands";
 import {
   formatBRL,
   getDashboardData,
@@ -33,12 +38,12 @@ export default async function DashboardPage({
 
   let data: DashboardData;
   let options;
-  let nextAllHands;
+  let upcomingEvents;
   try {
-    [data, options, nextAllHands] = await Promise.all([
+    [data, options, upcomingEvents] = await Promise.all([
       getDashboardData(filters),
       getFilterOptions(),
-      getNextAllHands(),
+      getUpcomingCompanyEvents(5),
     ]);
   } catch (err) {
     if (err instanceof DbUnavailableError) {
@@ -222,21 +227,30 @@ export default async function DashboardPage({
         </div>
       </div>
 
-      {nextAllHands && (
-        <Link href="/all-hands" className="card dash-allhands">
-          <span className="ah-left">
-            <span className="stat-label">Proximo all hands</span>
-            <strong style={{ fontSize: 15, textTransform: "capitalize" }}>
-              {formatFullDate(nextAllHands.date)}
-            </strong>
-            {nextAllHands.title && (
-              <span className="muted" style={{ fontSize: 13 }}>{nextAllHands.title}</span>
-            )}
-          </span>
-          <span className={`pill ${nextAllHands.daysUntil <= 7 ? "amber" : "green"}`}>
-            {ahWhenLabel(nextAllHands.daysUntil)}
-          </span>
-        </Link>
+      {upcomingEvents.length > 0 && (
+        <div className="card" style={{ marginTop: 24 }}>
+          <div className="row-between" style={{ marginBottom: 8 }}>
+            <h3 style={{ margin: 0 }}>Proximos eventos da empresa</h3>
+            <Link className="btn ghost" href="/calendario">
+              Ver calendario
+            </Link>
+          </div>
+          {upcomingEvents.map((e) => (
+            <div key={e.id} className="ah-row">
+              <span className="ah-chip">{formatShortDate(e.date)}</span>
+              <span className="ah-row-main">
+                <span className="ah-row-date">{formatFullDate(e.date)}</span>
+                <span className="muted" style={{ fontSize: 13 }}>{e.title}</span>
+              </span>
+              <span className={`pill ${e.kind === "allhands" ? "blue" : "purple"}`}>
+                {e.typeLabel}
+              </span>
+              <span className="muted" style={{ fontSize: 12, minWidth: 66, textAlign: "right" }}>
+                {ahWhenLabel(e.daysUntil)}
+              </span>
+            </div>
+          ))}
+        </div>
       )}
     </>
   );

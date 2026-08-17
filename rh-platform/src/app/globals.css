@@ -1102,6 +1102,12 @@ tbody tr:last-child td {
 .cal-dot.allhands { background: var(--ink); }
 .cal-dot.evento { background: #8b5cf6; }
 
+.event-note {
+  color: var(--muted-soft);
+  font-size: 12px;
+  font-weight: 400;
+}
+
 .cal-legend {
   display: flex;
   flex-wrap: wrap;

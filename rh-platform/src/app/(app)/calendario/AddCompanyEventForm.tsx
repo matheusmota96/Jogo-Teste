@@ -14,7 +14,7 @@ export function AddCompanyEventForm() {
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [form, setForm] = useState({ date: "", title: "", type: "EVENTO" });
+  const [form, setForm] = useState({ date: "", title: "", type: "EVENTO", notes: "" });
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -30,7 +30,7 @@ export function AddCompanyEventForm() {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error ?? "Erro ao salvar.");
       }
-      setForm({ date: "", title: "", type: "EVENTO" });
+      setForm({ date: "", title: "", type: "EVENTO", notes: "" });
       setOpen(false);
       router.refresh();
     } catch (err) {
@@ -65,6 +65,10 @@ export function AddCompanyEventForm() {
             <option key={t.value} value={t.value}>{t.label}</option>
           ))}
         </select>
+      </div>
+      <div className="field">
+        <label>Observacao (opcional)</label>
+        <input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
       </div>
       {error && <p className="auth-error">{error}</p>}
       <div style={{ display: "flex", gap: 8 }}>

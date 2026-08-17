@@ -26,7 +26,7 @@ export default async function CalendarioPage() {
         select: { id: true, name: true, birthDate: true },
       }),
       prisma.allHands.findMany({ select: { id: true, title: true, date: true } }),
-      prisma.companyEvent.findMany({ select: { id: true, title: true, type: true, date: true } }),
+      prisma.companyEvent.findMany({ select: { id: true, title: true, type: true, notes: true, date: true } }),
     ]);
 
     birthdays = people
@@ -50,6 +50,7 @@ export default async function CalendarioPage() {
       id: e.id,
       title: e.title,
       type: e.type,
+      notes: e.notes,
       year: e.date.getUTCFullYear(),
       month: e.date.getUTCMonth() + 1,
       day: e.date.getUTCDate(),

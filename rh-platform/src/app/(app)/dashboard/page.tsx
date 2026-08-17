@@ -240,7 +240,10 @@ export default async function DashboardPage({
               <span className="ah-chip">{formatShortDate(e.date)}</span>
               <span className="ah-row-main">
                 <span className="ah-row-date">{formatFullDate(e.date)}</span>
-                <span className="muted" style={{ fontSize: 13 }}>{e.title}</span>
+                <span className="muted" style={{ fontSize: 13 }}>
+                  {e.title}
+                  {e.notes && <span className="event-note"> · {e.notes}</span>}
+                </span>
               </span>
               <span className={`pill ${e.kind === "allhands" ? "blue" : "purple"}`}>
                 {e.typeLabel}

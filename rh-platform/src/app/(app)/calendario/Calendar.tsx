@@ -10,6 +10,7 @@ export type CompanyEvent = {
   id: string;
   title: string;
   type: string;
+  notes: string | null;
   year: number;
   month: number;
   day: number;
@@ -152,7 +153,10 @@ export function Calendar({
             {selEvents.evs.map((e) => (
               <div key={e.id} className="cal-event">
                 <span className="cal-dot evento" />
-                <span>{e.title}</span>
+                <span>
+                  {e.title}
+                  {e.notes && <span className="event-note"> · {e.notes}</span>}
+                </span>
                 <span className="pill purple">Evento B4you</span>
               </div>
             ))}

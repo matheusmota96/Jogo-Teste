@@ -67,6 +67,7 @@ export type UpcomingEvent = {
   id: string;
   date: Date;
   title: string;
+  notes: string | null;
   typeLabel: string;
   kind: "allhands" | "evento";
   daysUntil: number;
@@ -88,6 +89,7 @@ export async function getUpcomingCompanyEvents(limit = 5): Promise<UpcomingEvent
       id: a.id,
       date: a.date,
       title: a.title ?? "All Hands",
+      notes: a.notes,
       typeLabel: "All Hands",
       kind: "allhands" as const,
       daysUntil: daysUntil(a.date),
@@ -96,6 +98,7 @@ export async function getUpcomingCompanyEvents(limit = 5): Promise<UpcomingEvent
       id: e.id,
       date: e.date,
       title: e.title,
+      notes: e.notes,
       typeLabel: EVENT_TYPE_LABELS[e.type] ?? "Evento",
       kind: "evento" as const,
       daysUntil: daysUntil(e.date),

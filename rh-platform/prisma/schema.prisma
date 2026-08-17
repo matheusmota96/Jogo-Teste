@@ -84,6 +84,24 @@ model Collaborator {
   @@map("collaborators")
 }
 
+// Eventos da empresa (cafes da manha, confraternizacoes, etc.) para o calendario.
+enum CompanyEventType {
+  CAFE_DA_MANHA
+  CONFRATERNIZACAO
+  EVENTO
+}
+
+model CompanyEvent {
+  id        String           @id @default(cuid())
+  date      DateTime
+  title     String
+  type      CompanyEventType @default(EVENTO)
+  notes     String?
+  createdAt DateTime         @default(now())
+
+  @@map("company_events")
+}
+
 // All Hands — reunioes gerais da empresa (calendario).
 model AllHands {
   id        String   @id @default(cuid())

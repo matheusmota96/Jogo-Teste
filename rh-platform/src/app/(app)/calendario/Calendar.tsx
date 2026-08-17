@@ -6,13 +6,23 @@ import { getComemorativas, MONTH_NAMES_PT, WEEKDAYS_PT } from "@/lib/calendar";
 
 export type BirthdayEvent = { id: string; name: string; month: number; day: number };
 export type AllHandsEvent = { id: string; title: string | null; year: number; month: number; day: number };
+export type CompanyEvent = {
+  id: string;
+  title: string;
+  type: string;
+  year: number;
+  month: number;
+  day: number;
+};
 
 export function Calendar({
   birthdays,
   allHands,
+  companyEvents,
 }: {
   birthdays: BirthdayEvent[];
   allHands: AllHandsEvent[];
+  companyEvents: CompanyEvent[];
 }) {
   const today = new Date();
   const [view, setView] = useState({ y: today.getFullYear(), m: today.getMonth() });
@@ -33,7 +43,8 @@ export function Calendar({
     const bdays = birthdays.filter((b) => b.month === month1 && b.day === day);
     const coms = comemorativas.filter((c) => c.month === month1 && c.day === day);
     const ahs = allHands.filter((a) => a.year === view.y && a.month === month1 && a.day === day);
-    return { bdays, coms, ahs };
+    const evs = companyEvents.filter((e) => e.year === view.y && e.month === month1 && e.day === day);
+    return { bdays, coms, ahs, evs };
   }
 
   function prevMonth() {
@@ -47,8 +58,12 @@ export function Calendar({
     setSel({ y: today.getFullYear(), m: today.getMonth(), d: today.getDate() });
   }
 
-  const selEvents = sel.m === view.m && sel.y === view.y ? eventsFor(sel.d) : { bdays: [], coms: [], ahs: [] };
-  const hasSelEvents = selEvents.bdays.length + selEvents.coms.length + selEvents.ahs.length > 0;
+  const selEvents =
+    sel.m === view.m && sel.y === view.y
+      ? eventsFor(sel.d)
+      : { bdays: [], coms: [], ahs: [], evs: [] };
+  const hasSelEvents =
+    selEvents.bdays.length + selEvents.coms.length + selEvents.ahs.length + selEvents.evs.length > 0;
 
   return (
     <div className="grid" style={{ gridTemplateColumns: "1fr 320px", gap: 16, alignItems: "start" }}>
@@ -74,7 +89,7 @@ export function Calendar({
           {Array.from({ length: totalCells }).map((_, idx) => {
             const day = idx - firstWeekday + 1;
             if (day < 1 || day > daysInMonth) return <div key={idx} className="cal-cell empty" />;
-            const { bdays, coms, ahs } = eventsFor(day);
+            const { bdays, coms, ahs, evs } = eventsFor(day);
             const isToday =
               day === today.getDate() && view.m === today.getMonth() && view.y === today.getFullYear();
             const isSel = day === sel.d && view.m === sel.m && view.y === sel.y;
@@ -92,6 +107,7 @@ export function Calendar({
                     <span className={`cal-dot ${feriado ? "feriado" : "comemorativa"}`} title="Data comemorativa" />
                   )}
                   {ahs.length > 0 && <span className="cal-dot allhands" title="All hands" />}
+                  {evs.length > 0 && <span className="cal-dot evento" title="Evento B4you" />}
                 </span>
               </button>
             );
@@ -103,6 +119,7 @@ export function Calendar({
           <span className="legend-item"><i className="cal-dot comemorativa" /> Comemorativa</span>
           <span className="legend-item"><i className="cal-dot feriado" /> Feriado</span>
           <span className="legend-item"><i className="cal-dot allhands" /> All hands</span>
+          <span className="legend-item"><i className="cal-dot evento" /> Evento B4you</span>
         </div>
       </div>
 
@@ -130,6 +147,13 @@ export function Calendar({
                 <span className="cal-dot allhands" />
                 <span>All Hands{a.title ? ` · ${a.title}` : ""}</span>
                 <Link className="btn ghost" href="/all-hands">ver</Link>
+              </div>
+            ))}
+            {selEvents.evs.map((e) => (
+              <div key={e.id} className="cal-event">
+                <span className="cal-dot evento" />
+                <span>{e.title}</span>
+                <span className="pill purple">Evento B4you</span>
               </div>
             ))}
             {selEvents.bdays.map((b) => (

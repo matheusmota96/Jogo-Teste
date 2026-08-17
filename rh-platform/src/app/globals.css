@@ -313,6 +313,7 @@ tbody tr:last-child td {
 .pill.red { background: #fdecec; color: #b13234; }
 .pill.amber { background: #fbf1de; color: #8a5a08; }
 .pill.blue { background: #e9f1fe; color: #2160c4; }
+.pill.purple { background: #f0eafe; color: #6d40c9; }
 .pill.gray { background: #f0f1f3; color: var(--muted); }
 
 /* ===== DISC bars ===== */
@@ -1099,6 +1100,7 @@ tbody tr:last-child td {
 .cal-dot.comemorativa { background: var(--i); }
 .cal-dot.feriado { background: var(--d); }
 .cal-dot.allhands { background: var(--ink); }
+.cal-dot.evento { background: #8b5cf6; }
 
 .cal-legend {
   display: flex;

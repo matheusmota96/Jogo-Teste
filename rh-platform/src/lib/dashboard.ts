@@ -96,6 +96,15 @@ export type Sector = {
   members: SectorMember[];
 };
 
+export type Birthday = {
+  id: string;
+  name: string;
+  department: string | null;
+  dateLabel: string;
+  turningAge: number;
+  daysUntil: number;
+};
+
 export type DashboardData = {
   cards: {
     headcount: number;
@@ -123,6 +132,7 @@ export type DashboardData = {
     bySector: Array<{ department: string; avg: number | null; count: number }>;
   };
   alerts: Array<{ level: "info" | "warn" | "critical"; text: string }>;
+  birthdays: Birthday[];
   hasHistory: boolean;
   hasPerformance: boolean;
 };
@@ -185,6 +195,7 @@ export async function getDashboardData(filters: DashboardFilters): Promise<Dashb
         department: true,
         salary: true,
         admissionDate: true,
+        birthDate: true,
         manager: { select: { name: true } },
       },
     }),
@@ -383,6 +394,29 @@ export async function getDashboardData(filters: DashboardFilters): Promise<Dashb
     }
   }
 
+  // --- Proximos aniversariantes (UTC, para evitar off-by-one de fuso) ---
+  const todayUTC = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  const birthdays: Birthday[] = active
+    .filter((c) => c.birthDate)
+    .map((c) => {
+      const b = c.birthDate as Date;
+      const bm = b.getUTCMonth();
+      const bd = b.getUTCDate();
+      let nextUTC = Date.UTC(now.getUTCFullYear(), bm, bd);
+      if (nextUTC < todayUTC) nextUTC = Date.UTC(now.getUTCFullYear() + 1, bm, bd);
+      const daysUntil = Math.round((nextUTC - todayUTC) / 86400000);
+      return {
+        id: c.id,
+        name: c.name,
+        department: c.department,
+        dateLabel: `${String(bd).padStart(2, "0")}/${String(bm + 1).padStart(2, "0")}`,
+        turningAge: new Date(nextUTC).getUTCFullYear() - b.getUTCFullYear(),
+        daysUntil,
+      };
+    })
+    .sort((a, b) => a.daysUntil - b.daysUntil)
+    .slice(0, 6);
+
   return {
     cards: {
       headcount,
@@ -403,6 +437,7 @@ export async function getDashboardData(filters: DashboardFilters): Promise<Dashb
     terminationsList,
     performance: { avg: avgPerformance, high, expected, below, pending, bySector },
     alerts,
+    birthdays,
     hasHistory,
     hasPerformance: scores.length > 0,
   };

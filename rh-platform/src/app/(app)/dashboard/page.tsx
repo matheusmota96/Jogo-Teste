@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { DbNotice } from "@/components/DbNotice";
 import { DbUnavailableError } from "@/lib/collaborators";
 import {
@@ -173,25 +174,55 @@ export default async function DashboardPage({
       </div>
 
       {/* LINHA 5 — GESTAO */}
-      <div className="section-head">
-        <h3>Atencao do RH</h3>
-      </div>
-      <div className="card">
-        {data.alerts.length === 0 ? (
-          <p className="muted" style={{ margin: 0 }}>Nenhum alerta no momento.</p>
-        ) : (
-          <div className="alerts">
-            {data.alerts.map((a, i) => (
-              <div key={i} className={`alert-item ${a.level}`}>
-                <span className="alert-dot" />
-                {a.text}
+      <div className="grid cols-2">
+        <div className="card">
+          <h3 style={{ marginTop: 0 }}>Atencao do RH</h3>
+          {data.alerts.length === 0 ? (
+            <p className="muted" style={{ margin: 0 }}>Nenhum alerta no momento.</p>
+          ) : (
+            <div className="alerts">
+              {data.alerts.map((a, i) => (
+                <div key={i} className={`alert-item ${a.level}`}>
+                  <span className="alert-dot" />
+                  {a.text}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="card">
+          <h3 style={{ marginTop: 0 }}>Proximos aniversariantes</h3>
+          {data.birthdays.length === 0 ? (
+            <p className="muted" style={{ margin: 0 }}>
+              Nenhuma data de nascimento cadastrada.
+            </p>
+          ) : (
+            data.birthdays.map((b) => (
+              <div key={b.id} className="birthday-item">
+                <span className="birthday-day">{b.dateLabel}</span>
+                <span className="birthday-info">
+                  <Link href={`/colaboradores/${b.id}`}>{b.name}</Link>
+                  <span className="muted" style={{ fontSize: 12 }}>
+                    {b.department ?? "-"} · faz {b.turningAge} anos
+                  </span>
+                </span>
+                <span className={`pill ${b.daysUntil === 0 ? "green" : "gray"}`}>
+                  {whenLabel(b.daysUntil)}
+                </span>
               </div>
-            ))}
-          </div>
-        )}
+            ))
+          )}
+        </div>
       </div>
     </>
   );
+}
+
+function whenLabel(days: number): string {
+  if (days === 0) return "Hoje";
+  if (days === 1) return "Amanha";
+  return `em ${days} dias`;
 }
 
 function StatCard({

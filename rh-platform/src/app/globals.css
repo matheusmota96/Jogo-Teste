@@ -926,3 +926,35 @@ tbody tr:last-child td {
 .alert-item.info .alert-dot { background: var(--c); }
 .alert-item.warn .alert-dot { background: var(--i); }
 .alert-item.critical .alert-dot { background: var(--d); }
+
+/* Aniversariantes */
+.birthday-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--border);
+}
+.birthday-item:last-child { border-bottom: none; }
+.birthday-day {
+  flex: 0 0 auto;
+  min-width: 48px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  color: var(--brand);
+  background: var(--brand-soft);
+  border-radius: var(--radius-sm);
+  padding: 6px 8px;
+}
+.birthday-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.birthday-info a {
+  font-weight: 600;
+  font-size: 14px;
+}

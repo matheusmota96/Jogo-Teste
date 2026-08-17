@@ -84,6 +84,17 @@ model Collaborator {
   @@map("collaborators")
 }
 
+// All Hands — reunioes gerais da empresa (calendario).
+model AllHands {
+  id        String   @id @default(cuid())
+  date      DateTime
+  title     String?
+  notes     String?
+  createdAt DateTime @default(now())
+
+  @@map("all_hands")
+}
+
 // Empresas do grupo (B4You, Acelera Marca, Brands) + o proprio grupo.
 model Company {
   id            String         @id @default(cuid())

@@ -958,3 +958,72 @@ tbody tr:last-child td {
   font-weight: 600;
   font-size: 14px;
 }
+
+/* ===== All Hands ===== */
+.allhands-next {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 22px 24px;
+  border-radius: var(--radius);
+  margin-bottom: 20px;
+  color: #fff;
+  background: linear-gradient(135deg, #0e1526 0%, #123f37 100%);
+}
+.ah-eyebrow {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: #9fb8ad;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.ah-date {
+  font-size: 22px;
+  font-weight: 680;
+  text-transform: capitalize;
+}
+.ah-title {
+  color: #c9d3ce;
+  font-size: 14px;
+  margin-top: 4px;
+}
+.ah-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.ah-row:last-child { border-bottom: none; }
+.ah-row.past { opacity: 0.6; }
+.ah-chip {
+  flex: 0 0 auto;
+  min-width: 54px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  color: var(--brand);
+  background: var(--brand-soft);
+  border-radius: var(--radius-sm);
+  padding: 8px;
+}
+.ah-row-main {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.ah-row-date { font-weight: 600; font-size: 14px; text-transform: capitalize; }
+
+/* Dashboard: proximo all hands */
+.dash-allhands {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 24px;
+}
+.dash-allhands .ah-left { display: flex; align-items: center; gap: 14px; }

@@ -13,6 +13,7 @@
     "db:migrate": "prisma migrate dev",
     "db:seed": "tsx prisma/seed.ts",
     "db:seed:team": "tsx prisma/seed-team.ts",
+    "db:seed:allhands": "tsx prisma/seed-allhands.ts",
     "test:disc": "tsx src/lib/disc/verify.ts"
   },
   "prisma": {

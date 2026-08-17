@@ -61,6 +61,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         </Link>
 
         <div className="nav-section">Ferramentas</div>
+        <Link className="nav-link" href="/all-hands">
+          All Hands
+        </Link>
         <Link className="nav-link" href="/profiler">
           Aplicar Profiler
         </Link>

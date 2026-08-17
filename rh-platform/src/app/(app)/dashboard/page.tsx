@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { DbNotice } from "@/components/DbNotice";
 import { DbUnavailableError } from "@/lib/collaborators";
+import { getNextAllHands, formatFullDate, whenLabel as ahWhenLabel } from "@/lib/allhands";
 import {
   formatBRL,
   getDashboardData,
@@ -32,8 +33,13 @@ export default async function DashboardPage({
 
   let data: DashboardData;
   let options;
+  let nextAllHands;
   try {
-    [data, options] = await Promise.all([getDashboardData(filters), getFilterOptions()]);
+    [data, options, nextAllHands] = await Promise.all([
+      getDashboardData(filters),
+      getFilterOptions(),
+      getNextAllHands(),
+    ]);
   } catch (err) {
     if (err instanceof DbUnavailableError) {
       return (
@@ -215,6 +221,23 @@ export default async function DashboardPage({
           )}
         </div>
       </div>
+
+      {nextAllHands && (
+        <Link href="/all-hands" className="card dash-allhands">
+          <span className="ah-left">
+            <span className="stat-label">Proximo all hands</span>
+            <strong style={{ fontSize: 15, textTransform: "capitalize" }}>
+              {formatFullDate(nextAllHands.date)}
+            </strong>
+            {nextAllHands.title && (
+              <span className="muted" style={{ fontSize: 13 }}>{nextAllHands.title}</span>
+            )}
+          </span>
+          <span className={`pill ${nextAllHands.daysUntil <= 7 ? "amber" : "green"}`}>
+            {ahWhenLabel(nextAllHands.daysUntil)}
+          </span>
+        </Link>
+      )}
     </>
   );
 }

@@ -13,7 +13,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <aside className="sidebar">
         <div className="brand">
           <Logo height={30} tone="light" />
-          <small>HRIS orientado a dados</small>
+          <small>Group B4You · People Ops</small>
         </div>
 
         <Link className="nav-link" href="/dashboard">

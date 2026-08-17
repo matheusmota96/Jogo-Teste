@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "RH B4you · Plataforma",
-  description: "Plataforma completa de gestao de pessoas orientada a dados",
+  title: "RH Group B4You",
+  description: "People Management Operating System do Grupo B4You",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

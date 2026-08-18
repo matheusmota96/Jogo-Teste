@@ -162,6 +162,7 @@ enum EmploymentEventType {
   TREINAMENTO
   ADVERTENCIA
   FERIAS
+  DESLIGAMENTO
   OUTRO
 }
 

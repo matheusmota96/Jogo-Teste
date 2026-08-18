@@ -56,6 +56,12 @@ export default async function CollaboratorsPage() {
                     <Link href={`/colaboradores/${c.id}`}>
                       <strong>{c.name}</strong>
                     </Link>
+                    {c.status === "TERMINATED" && (
+                      <span className="pill red" style={{ marginLeft: 8 }}>Desligado</span>
+                    )}
+                    {c.status === "ON_LEAVE" && (
+                      <span className="pill amber" style={{ marginLeft: 8 }}>Afastado</span>
+                    )}
                     <div className="muted" style={{ fontSize: 12 }}>
                       {c.email}
                     </div>

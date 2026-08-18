@@ -7,6 +7,7 @@ import { getCollaborator, DbUnavailableError } from "@/lib/collaborators";
 import { PROFILE_ARCHETYPES } from "@/lib/disc/score";
 import type { DiscFactor } from "@/lib/disc/types";
 import { AddEventForm } from "./AddEventForm";
+import { TerminateCollaborator } from "./TerminateCollaborator";
 
 export const dynamic = "force-dynamic";
 
@@ -70,11 +71,20 @@ export default async function CollaboratorDetailPage({
           <p className="page-subtitle" style={{ margin: 0 }}>
             {collaborator.position?.title ?? collaborator.role ?? "Sem cargo"}
             {collaborator.department ? ` · ${collaborator.department}` : ""} · {collaborator.email}
+            {collaborator.status === "TERMINATED" && collaborator.terminationDate
+              ? ` · Desligado em ${collaborator.terminationDate.toLocaleDateString("pt-BR")}`
+              : ""}
           </p>
         </div>
-        <Link className="btn" href={`/profiler/${collaborator.id}`}>
-          Aplicar novo teste
-        </Link>
+        {collaborator.status !== "TERMINATED" && (
+          <Link className="btn" href={`/profiler/${collaborator.id}`}>
+            Aplicar novo teste
+          </Link>
+        )}
+      </div>
+
+      <div style={{ marginBottom: 20 }}>
+        <TerminateCollaborator collaboratorId={collaborator.id} status={collaborator.status} />
       </div>
 
       {/* Dados cadastrais */}

@@ -7,6 +7,7 @@ export type CollaboratorWithLatest = {
   email: string;
   role: string | null;
   department: string | null;
+  status: string;
   companies: string[];
   latest: {
     id: string;
@@ -47,6 +48,7 @@ export async function listCollaborators(): Promise<CollaboratorWithLatest[]> {
       email: c.email,
       role: c.role,
       department: c.department,
+      status: c.status,
       companies: c.companies.map((x) => x.name),
       latest: a
         ? {

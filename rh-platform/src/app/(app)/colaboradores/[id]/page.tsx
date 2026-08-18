@@ -6,8 +6,9 @@ import { DiscBars } from "@/components/DiscBars";
 import { getCollaborator, DbUnavailableError } from "@/lib/collaborators";
 import { PROFILE_ARCHETYPES } from "@/lib/disc/score";
 import type { DiscFactor } from "@/lib/disc/types";
+import { prisma } from "@/lib/db";
 import { AddEventForm } from "./AddEventForm";
-import { TerminateCollaborator } from "./TerminateCollaborator";
+import { CollaboratorActions } from "./CollaboratorActions";
 
 export const dynamic = "force-dynamic";
 
@@ -41,8 +42,13 @@ export default async function CollaboratorDetailPage({
   const { id } = await params;
 
   let collaborator;
+  let companies: { id: string; name: string }[] = [];
   try {
     collaborator = await getCollaborator(id);
+    companies = await prisma.company.findMany({
+      orderBy: { name: "asc" },
+      select: { id: true, name: true },
+    });
   } catch (err) {
     if (err instanceof DbUnavailableError) return <DbNotice />;
     throw err;
@@ -76,16 +82,26 @@ export default async function CollaboratorDetailPage({
               : ""}
           </p>
         </div>
-        {collaborator.status !== "TERMINATED" && (
-          <Link className="btn" href={`/profiler/${collaborator.id}`}>
-            Aplicar novo teste
-          </Link>
-        )}
       </div>
 
-      <div style={{ marginBottom: 20 }}>
-        <TerminateCollaborator collaboratorId={collaborator.id} status={collaborator.status} />
-      </div>
+      <CollaboratorActions
+        collaborator={{
+          id: collaborator.id,
+          name: collaborator.name,
+          role: collaborator.role ?? "",
+          department: collaborator.department ?? "",
+          salary: collaborator.salary != null ? String(collaborator.salary) : "",
+          admissionDate: collaborator.admissionDate
+            ? collaborator.admissionDate.toISOString().slice(0, 10)
+            : "",
+          birthDate: collaborator.birthDate
+            ? collaborator.birthDate.toISOString().slice(0, 10)
+            : "",
+          status: collaborator.status,
+          companyIds: collaborator.companies.map((c) => c.id),
+        }}
+        companies={companies}
+      />
 
       {/* Dados cadastrais */}
       <div className="card" style={{ marginBottom: 16 }}>

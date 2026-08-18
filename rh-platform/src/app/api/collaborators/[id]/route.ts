@@ -1,5 +1,13 @@
+import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+
+function parseUtcDate(value: unknown): Date | null {
+  const s = String(value ?? "");
+  if (!s) return null;
+  const d = new Date(`${s}T00:00:00.000Z`);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
 
 export async function PATCH(
   request: Request,
@@ -13,6 +21,35 @@ export async function PATCH(
     const collaborator = await prisma.collaborator.findUnique({ where: { id } });
     if (!collaborator) {
       return NextResponse.json({ error: "Colaborador nao encontrado." }, { status: 404 });
+    }
+
+    if (action === "update") {
+      const name = String(body.name ?? "").trim();
+      if (!name) {
+        return NextResponse.json({ error: "Nome e obrigatorio." }, { status: 400 });
+      }
+      const salaryNum =
+        body.salary !== "" && body.salary != null ? Number(body.salary) : null;
+
+      const data: Prisma.CollaboratorUpdateInput = {
+        name,
+        role: body.role ? String(body.role).trim() : null,
+        department: body.department ? String(body.department).trim() : null,
+        salary: salaryNum != null && !Number.isNaN(salaryNum) ? salaryNum : null,
+        admissionDate: parseUtcDate(body.admissionDate),
+        birthDate: parseUtcDate(body.birthDate),
+      };
+
+      if (Array.isArray(body.companyIds)) {
+        data.companies = { set: body.companyIds.map((cid: unknown) => ({ id: String(cid) })) };
+      }
+
+      const updated = await prisma.collaborator.update({
+        where: { id },
+        data,
+        select: { id: true, name: true },
+      });
+      return NextResponse.json(updated);
     }
 
     if (action === "terminate") {

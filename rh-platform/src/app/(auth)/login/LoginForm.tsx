@@ -22,7 +22,7 @@ export function LoginForm() {
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.error ?? "Nao foi possivel entrar.");
+        throw new Error(data.error ?? "Não foi possível entrar.");
       }
       router.push("/");
       router.refresh();
@@ -59,7 +59,7 @@ export function LoginForm() {
         {loading ? "Entrando..." : "Entrar"}
       </button>
       <p className="auth-alt">
-        Nao tem conta? <Link href="/signup">Criar conta</Link>
+        Não tem conta? <Link href="/signup">Criar conta</Link>
       </p>
     </form>
   );

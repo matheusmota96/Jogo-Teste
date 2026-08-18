@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Logo } from "@/components/Logo";
 import { LogoutButton } from "@/components/LogoutButton";
+import { NavLink } from "@/components/NavLink";
 import { getSessionUser } from "@/lib/auth";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -16,70 +16,33 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <small>Group B4You · People Ops</small>
         </div>
 
-        <Link className="nav-link" href="/dashboard">
-          Dashboard
-        </Link>
-        <Link className="nav-link" href="/">
-          Visao geral
-        </Link>
+        <NavLink href="/dashboard">Dashboard</NavLink>
+        <NavLink href="/">Visão geral</NavLink>
 
-        <div className="nav-section">Ciclo de gestao</div>
-        <Link className="nav-link" href="/colaboradores">
-          1 · Mapeamento (DISC)
-        </Link>
-        <Link className="nav-link" href="/cargos">
-          2 · Engenharia de Cargos
-        </Link>
-        <Link className="nav-link" href="/recrutamento">
-          3 · Recrutamento (ATS)
-        </Link>
-        <Link className="nav-link" href="/onboarding">
-          4 · Onboarding
-        </Link>
-        <Link className="nav-link" href="/colaboradores">
-          5 · Employee Hub
-        </Link>
-        <Link className="nav-link" href="/performance">
-          6 · Performance & PDI
-        </Link>
-        <Link className="nav-link" href="/engajamento">
-          7 · Retencao & Engajamento
-        </Link>
-        <Link className="nav-link" href="/analytics">
-          8 · People Analytics
-        </Link>
+        <div className="nav-section">Ciclo de gestão</div>
+        <NavLink href="/colaboradores">1 · Mapeamento (DISC)</NavLink>
+        <NavLink href="/cargos">2 · Engenharia de Cargos</NavLink>
+        <NavLink href="/recrutamento">3 · Recrutamento (ATS)</NavLink>
+        <NavLink href="/onboarding">4 · Onboarding</NavLink>
+        <NavLink href="/performance">5 · Performance & PDI</NavLink>
+        <NavLink href="/engajamento">6 · Retenção & Engajamento</NavLink>
+        <NavLink href="/analytics">7 · People Analytics</NavLink>
 
-        <div className="nav-section">Estrategico</div>
-        <Link className="nav-link" href="/okrs">
-          Metas (OKRs)
-        </Link>
-        <Link className="nav-link" href="/nine-box">
-          Sucessao (Nine Box)
-        </Link>
-        <Link className="nav-link" href="/lms">
-          LMS (Treinamentos)
-        </Link>
+        <div className="nav-section">Estratégico</div>
+        <NavLink href="/okrs">Metas (OKRs)</NavLink>
+        <NavLink href="/nine-box">Sucessão (Nine Box)</NavLink>
+        <NavLink href="/lms">LMS (Treinamentos)</NavLink>
 
         <div className="nav-section">Ferramentas</div>
-        <Link className="nav-link" href="/calendario">
-          Calendario
-        </Link>
-        <Link className="nav-link" href="/all-hands">
-          All Hands
-        </Link>
-        <Link className="nav-link" href="/profiler">
-          Aplicar Profiler
-        </Link>
-        <Link className="nav-link" href="/comparar">
-          Comparar perfis
-        </Link>
+        <NavLink href="/calendario">Calendário</NavLink>
+        <NavLink href="/all-hands">All Hands</NavLink>
+        <NavLink href="/profiler">Aplicar Profiler</NavLink>
+        <NavLink href="/comparar">Comparar perfis</NavLink>
 
         {user.role === "ADMIN" && (
           <>
-            <div className="nav-section">Administracao</div>
-            <Link className="nav-link" href="/admin/usuarios">
-              Usuarios & acessos
-            </Link>
+            <div className="nav-section">Administração</div>
+            <NavLink href="/admin/usuarios">Usuários & acessos</NavLink>
           </>
         )}
 

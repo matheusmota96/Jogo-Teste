@@ -40,7 +40,7 @@ export function formatTenure(admission: Date | null): string {
 export type Period = "mes" | "3m" | "6m" | "12m" | "ano";
 
 export const PERIOD_LABELS: Record<Period, string> = {
-  mes: "Mes atual",
+  mes: "Mês atual",
   "3m": "3 meses",
   "6m": "6 meses",
   "12m": "12 meses",

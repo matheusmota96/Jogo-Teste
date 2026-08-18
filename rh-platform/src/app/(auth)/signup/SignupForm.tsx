@@ -22,7 +22,7 @@ export function SignupForm() {
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.error ?? "Nao foi possivel criar a conta.");
+        throw new Error(data.error ?? "Não foi possível criar a conta.");
       }
       router.push("/");
       router.refresh();
@@ -70,7 +70,7 @@ export function SignupForm() {
           type="password"
           value={form.accessCode}
           onChange={(e) => setForm({ ...form, accessCode: e.target.value })}
-          placeholder="Codigo fornecido pela empresa"
+          placeholder="Código fornecido pela empresa"
           required
         />
       </div>
@@ -79,7 +79,7 @@ export function SignupForm() {
         {loading ? "Criando..." : "Criar conta"}
       </button>
       <p className="auth-alt">
-        Ja tem conta? <Link href="/login">Entrar</Link>
+        Já tem conta? <Link href="/login">Entrar</Link>
       </p>
     </form>
   );

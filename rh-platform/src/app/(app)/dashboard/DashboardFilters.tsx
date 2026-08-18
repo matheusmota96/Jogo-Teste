@@ -23,7 +23,7 @@ export function DashboardFilters({ options }: { options: FilterOptions }) {
   return (
     <div className="filters-bar">
       <div className="filter">
-        <label>Periodo</label>
+        <label>Período</label>
         <select value={period} onChange={(e) => setParam("period", e.target.value)}>
           {PERIODS.map((p) => (
             <option key={p} value={p}>

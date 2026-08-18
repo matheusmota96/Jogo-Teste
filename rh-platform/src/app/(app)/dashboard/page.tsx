@@ -62,7 +62,7 @@ export default async function DashboardPage({
   return (
     <>
       <h1 className="page-title">Dashboard</h1>
-      <p className="page-subtitle">Visao executiva das pessoas da empresa</p>
+      <p className="page-subtitle">Visão executiva das pessoas da empresa</p>
 
       <DashboardFilters options={options} />
 
@@ -70,20 +70,78 @@ export default async function DashboardPage({
       <div className="dash-cards">
         <StatCard label="Colaboradores" value={String(cards.headcount)}
           delta={cards.headcountDelta != null && cards.headcountDelta !== 0
-            ? { n: cards.headcountDelta, suffix: "no mes" } : null} />
+            ? { n: cards.headcountDelta, suffix: "no mês" } : null} />
         <StatCard label="Custo mensal com pessoal" value={formatBRL(cards.monthlyCost)} />
-        <StatCard label="Admissoes no periodo" value={String(cards.admissions)} />
-        <StatCard label="Desligamentos no periodo" value={String(cards.terminations)} />
+        <StatCard label="Admissões no período" value={String(cards.admissions)} />
+        <StatCard label="Desligamentos no período" value={String(cards.terminations)} />
         <StatCard label="Turnover" value={`${cards.turnover.toFixed(1)}%`} />
-        <StatCard label="Performance media"
+        <StatCard label="Performance média"
           value={cards.avgPerformance != null ? `${cards.avgPerformance.toFixed(1)}/5` : "—"} />
+      </div>
+
+      {/* DESTAQUE — ANIVERSARIANTES E EVENTOS */}
+      <div className="grid cols-2" style={{ marginTop: 24, marginBottom: 24 }}>
+        <div className="card">
+          <h3 style={{ marginTop: 0 }}>Próximos aniversariantes</h3>
+          {data.birthdays.length === 0 ? (
+            <p className="muted" style={{ margin: 0 }}>
+              Nenhuma data de nascimento cadastrada.
+            </p>
+          ) : (
+            data.birthdays.map((b) => (
+              <div key={b.id} className="birthday-item">
+                <span className="birthday-day">{b.dateLabel}</span>
+                <span className="birthday-info">
+                  <Link href={`/colaboradores/${b.id}`}>{b.name}</Link>
+                  <span className="muted" style={{ fontSize: 12 }}>
+                    {b.department ?? "-"} · faz {b.turningAge} anos
+                  </span>
+                </span>
+                <span className={`pill ${b.daysUntil === 0 ? "green" : "gray"}`}>
+                  {whenLabel(b.daysUntil)}
+                </span>
+              </div>
+            ))
+          )}
+        </div>
+
+        <div className="card">
+          <div className="row-between" style={{ marginBottom: 8 }}>
+            <h3 style={{ margin: 0 }}>Próximos eventos da empresa</h3>
+            <Link className="btn ghost" href="/calendario">
+              Ver calendário
+            </Link>
+          </div>
+          {upcomingEvents.length === 0 ? (
+            <p className="muted" style={{ margin: 0 }}>Nenhum evento agendado.</p>
+          ) : (
+            upcomingEvents.map((e) => (
+              <div key={e.id} className="ah-row">
+                <span className="ah-chip">{formatShortDate(e.date)}</span>
+                <span className="ah-row-main">
+                  <span className="ah-row-date">{formatFullDate(e.date)}</span>
+                  <span className="muted" style={{ fontSize: 13 }}>
+                    {e.title}
+                    {e.notes && <span className="event-note"> · {e.notes}</span>}
+                  </span>
+                </span>
+                <span className={`pill ${e.kind === "allhands" ? "blue" : "purple"}`}>
+                  {e.typeLabel}
+                </span>
+                <span className="muted" style={{ fontSize: 12, minWidth: 66, textAlign: "right" }}>
+                  {ahWhenLabel(e.daysUntil)}
+                </span>
+              </div>
+            ))
+          )}
+        </div>
       </div>
 
       {/* LINHA 2 — ESTRUTURA */}
       <div className="section-head">
         <h3>Pessoas e custo por setor</h3>
         <span className="muted" style={{ fontSize: 13 }}>
-          {data.totals.people} pessoas · {formatBRL(data.totals.cost)}/mes
+          {data.totals.people} pessoas · {formatBRL(data.totals.cost)}/mês
         </span>
       </div>
       <div className="card" style={{ marginBottom: 24 }}>
@@ -102,9 +160,9 @@ export default async function DashboardPage({
         </div>
         <div className="card">
           <div className="row-between" style={{ marginBottom: 12 }}>
-            <h3 style={{ margin: 0 }}>Admissoes × Desligamentos</h3>
+            <h3 style={{ margin: 0 }}>Admissões × Desligamentos</h3>
             <span className="muted" style={{ fontSize: 13 }}>
-              liquido {cards.netGrowth >= 0 ? "+" : ""}
+              líquido {cards.netGrowth >= 0 ? "+" : ""}
               {cards.netGrowth}
             </span>
           </div>
@@ -115,9 +173,9 @@ export default async function DashboardPage({
           )}
           <div className="grid cols-2" style={{ marginTop: 16 }}>
             <div>
-              <div className="stat-label">Admissoes</div>
+              <div className="stat-label">Admissões</div>
               <div className="stat" style={{ fontSize: 22, color: "var(--s)" }}>{cards.admissions}</div>
-              <PeopleReveal label="Admissoes" people={data.admissionsList} />
+              <PeopleReveal label="Admissões" people={data.admissionsList} />
             </div>
             <div>
               <div className="stat-label">Desligamentos</div>
@@ -131,7 +189,7 @@ export default async function DashboardPage({
       {/* LINHA 4 — PESSOAS */}
       <div className="grid cols-2" style={{ marginBottom: 24 }}>
         <div className="card">
-          <h3 style={{ marginTop: 0 }}>Distribuicao por setor</h3>
+          <h3 style={{ marginTop: 0 }}>Distribuição por setor</h3>
           <div className="disc-bars">
             {data.distribution.map((d) => {
               const max = Math.max(...data.distribution.map((x) => x.count), 1);
@@ -173,95 +231,42 @@ export default async function DashboardPage({
           ) : (
             <div>
               <div className="perf-tiles">
-                <PerfTile n={data.performance.pending} label="Sem avaliacao" color="var(--muted)" />
+                <PerfTile n={data.performance.pending} label="Sem avaliação" color="var(--muted)" />
               </div>
               <p className="muted" style={{ fontSize: 13, marginBottom: 0 }}>
-                Nenhuma avaliacao concluida ainda. A performance aparece conforme as
-                avaliacoes forem registradas no modulo Performance.
+                Nenhuma avaliação concluída ainda. A performance aparece conforme as
+                avaliações forem registradas no módulo Performance.
               </p>
             </div>
           )}
         </div>
       </div>
 
-      {/* LINHA 5 — GESTAO */}
-      <div className="grid cols-2">
-        <div className="card">
-          <h3 style={{ marginTop: 0 }}>Atencao do RH</h3>
-          {data.alerts.length === 0 ? (
-            <p className="muted" style={{ margin: 0 }}>Nenhum alerta no momento.</p>
-          ) : (
-            <div className="alerts">
-              {data.alerts.map((a, i) => (
-                <div key={i} className={`alert-item ${a.level}`}>
-                  <span className="alert-dot" />
-                  {a.text}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div className="card">
-          <h3 style={{ marginTop: 0 }}>Proximos aniversariantes</h3>
-          {data.birthdays.length === 0 ? (
-            <p className="muted" style={{ margin: 0 }}>
-              Nenhuma data de nascimento cadastrada.
-            </p>
-          ) : (
-            data.birthdays.map((b) => (
-              <div key={b.id} className="birthday-item">
-                <span className="birthday-day">{b.dateLabel}</span>
-                <span className="birthday-info">
-                  <Link href={`/colaboradores/${b.id}`}>{b.name}</Link>
-                  <span className="muted" style={{ fontSize: 12 }}>
-                    {b.department ?? "-"} · faz {b.turningAge} anos
-                  </span>
-                </span>
-                <span className={`pill ${b.daysUntil === 0 ? "green" : "gray"}`}>
-                  {whenLabel(b.daysUntil)}
-                </span>
-              </div>
-            ))
-          )}
-        </div>
+      {/* GESTAO */}
+      <div className="section-head">
+        <h3>Atenção do RH</h3>
       </div>
-
-      {upcomingEvents.length > 0 && (
-        <div className="card" style={{ marginTop: 24 }}>
-          <div className="row-between" style={{ marginBottom: 8 }}>
-            <h3 style={{ margin: 0 }}>Proximos eventos da empresa</h3>
-            <Link className="btn ghost" href="/calendario">
-              Ver calendario
-            </Link>
+      <div className="card">
+        {data.alerts.length === 0 ? (
+          <p className="muted" style={{ margin: 0 }}>Nenhum alerta no momento.</p>
+        ) : (
+          <div className="alerts">
+            {data.alerts.map((a, i) => (
+              <div key={i} className={`alert-item ${a.level}`}>
+                <span className="alert-dot" />
+                {a.text}
+              </div>
+            ))}
           </div>
-          {upcomingEvents.map((e) => (
-            <div key={e.id} className="ah-row">
-              <span className="ah-chip">{formatShortDate(e.date)}</span>
-              <span className="ah-row-main">
-                <span className="ah-row-date">{formatFullDate(e.date)}</span>
-                <span className="muted" style={{ fontSize: 13 }}>
-                  {e.title}
-                  {e.notes && <span className="event-note"> · {e.notes}</span>}
-                </span>
-              </span>
-              <span className={`pill ${e.kind === "allhands" ? "blue" : "purple"}`}>
-                {e.typeLabel}
-              </span>
-              <span className="muted" style={{ fontSize: 12, minWidth: 66, textAlign: "right" }}>
-                {ahWhenLabel(e.daysUntil)}
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
+        )}
+      </div>
     </>
   );
 }
 
 function whenLabel(days: number): string {
   if (days === 0) return "Hoje";
-  if (days === 1) return "Amanha";
+  if (days === 1) return "Amanhã";
   return `em ${days} dias`;
 }
 
@@ -300,8 +305,8 @@ function EmptyHistory() {
   return (
     <div className="empty-chart">
       <p className="muted" style={{ margin: 0, fontSize: 13 }}>
-        Sem historico suficiente. Esta visao e gerada automaticamente conforme as
-        <strong> datas de admissao e desligamento</strong> forem registradas nas fichas.
+        Sem histórico suficiente. Esta visão é gerada automaticamente conforme as
+        <strong> datas de admissão e desligamento</strong> forem registradas nas fichas.
       </p>
     </div>
   );

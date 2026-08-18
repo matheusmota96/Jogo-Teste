@@ -47,8 +47,8 @@ export async function middleware(req: NextRequest) {
   const token = req.cookies.get(SESSION_COOKIE)?.value;
   const valid = await isValidToken(token);
 
-  // Rotas de autenticacao: sempre liberadas.
-  if (pathname.startsWith("/api/auth")) {
+  // Rotas de autenticacao e health-check: sempre liberadas.
+  if (pathname.startsWith("/api/auth") || pathname === "/api/health") {
     return NextResponse.next();
   }
 

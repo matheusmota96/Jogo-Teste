@@ -70,7 +70,7 @@ export default async function CollaboratorDetailPage({
           </h1>
           <p className="page-subtitle" style={{ margin: 0 }}>
             {collaborator.position?.title ?? collaborator.role ?? "Sem cargo"}
-            {collaborator.department ? ` · ${collaborator.department}` : ""} · {collaborator.email}
+            {collaborator.department ? ` · ${collaborator.department}` : ""}
             {collaborator.status === "TERMINATED" && collaborator.terminationDate
               ? ` · Desligado em ${collaborator.terminationDate.toLocaleDateString("pt-BR")}`
               : ""}

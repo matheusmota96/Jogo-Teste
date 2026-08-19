@@ -4,6 +4,7 @@ import { DbUnavailableError } from "@/lib/collaborators";
 import { getSessionUser, isPrincipalAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { AdminUsers, type AdminUserRow } from "./AdminUsers";
+import { NewUserForm } from "./NewUserForm";
 
 export const dynamic = "force-dynamic";
 
@@ -31,11 +32,14 @@ export default async function AdminUsersPage() {
 
   return (
     <>
-      <h1 className="page-title">Usuarios & acessos</h1>
+      <h1 className="page-title">Usuários & acessos</h1>
       <p className="page-subtitle">
-        Gerencie quem tem acesso administrativo. {admins} admin(s) de {users.length}{" "}
-        usuario(s).
+        Gerencie quem tem acesso à plataforma. {admins} admin(s) de {users.length}{" "}
+        usuário(s).
       </p>
+      <div style={{ marginBottom: 20 }}>
+        <NewUserForm />
+      </div>
       <AdminUsers users={users} meId={me.id} />
     </>
   );

@@ -1,11 +1,14 @@
 import { DbNotice } from "@/components/DbNotice";
 import { listCollaborators, DbUnavailableError } from "@/lib/collaborators";
+import { getSessionUser } from "@/lib/auth";
 import { AddCollaboratorForm } from "./AddCollaboratorForm";
 import { CollaboratorsTable } from "./CollaboratorsTable";
 
 export const dynamic = "force-dynamic";
 
 export default async function CollaboratorsPage() {
+  const me = await getSessionUser();
+  const isAdmin = me?.role === "ADMIN";
   let collaborators;
   try {
     collaborators = await listCollaborators();
@@ -30,7 +33,7 @@ export default async function CollaboratorsPage() {
             Cadastro mestre e DNA Comportamental de cada pessoa · {collaborators.length} pessoas
           </p>
         </div>
-        <AddCollaboratorForm />
+        {isAdmin && <AddCollaboratorForm />}
       </div>
 
       {collaborators.length === 0 ? (

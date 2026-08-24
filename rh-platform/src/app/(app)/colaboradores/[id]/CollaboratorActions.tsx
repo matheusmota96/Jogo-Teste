@@ -91,6 +91,31 @@ export function CollaboratorActions({
             Aplicar novo teste
           </Link>
         )}
+
+        {collaborator.status === "ACTIVE" && (
+          <button
+            className="btn secondary"
+            disabled={saving}
+            onClick={() => {
+              if (confirm("Marcar este colaborador como afastado?")) patch({ action: "leave" });
+            }}
+          >
+            Marcar como afastado
+          </button>
+        )}
+
+        {collaborator.status === "ON_LEAVE" && (
+          <button
+            className="btn secondary"
+            disabled={saving}
+            onClick={() => {
+              if (confirm("Retornar este colaborador para ativo?")) patch({ action: "reactivate" });
+            }}
+          >
+            Voltar para ativo
+          </button>
+        )}
+
         {isTerminated ? (
           <button
             className="btn secondary"

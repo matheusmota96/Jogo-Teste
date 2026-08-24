@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { getSessionUser } from "@/lib/auth";
 
 const VALID_TYPES = [
   "ADMISSAO",
@@ -16,6 +17,12 @@ type EventType = (typeof VALID_TYPES)[number];
 
 export async function POST(request: Request) {
   try {
+    const me = await getSessionUser();
+    if (!me) return NextResponse.json({ error: "Nao autenticado." }, { status: 401 });
+    if (me.role !== "ADMIN") {
+      return NextResponse.json({ error: "Apenas administradores podem registrar eventos." }, { status: 403 });
+    }
+
     const body = await request.json();
     const collaboratorId = String(body.collaboratorId ?? "");
     const type = String(body.type ?? "");

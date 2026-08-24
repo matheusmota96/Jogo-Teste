@@ -1,8 +1,18 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { getSessionUser } from "@/lib/auth";
 
 export async function POST(request: Request) {
   try {
+    const me = await getSessionUser();
+    if (!me) return NextResponse.json({ error: "Nao autenticado." }, { status: 401 });
+    if (me.role !== "ADMIN") {
+      return NextResponse.json(
+        { error: "Apenas administradores podem cadastrar colaboradores." },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json();
     const name = String(body.name ?? "").trim();
     const email = String(body.email ?? "").trim().toLowerCase();

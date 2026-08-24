@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { getSessionUser } from "@/lib/auth";
 
 function parseUtcDate(value: unknown): Date | null {
   const s = String(value ?? "");
@@ -14,6 +15,15 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const me = await getSessionUser();
+    if (!me) return NextResponse.json({ error: "Nao autenticado." }, { status: 401 });
+    if (me.role !== "ADMIN") {
+      return NextResponse.json(
+        { error: "Apenas administradores podem editar colaboradores." },
+        { status: 403 }
+      );
+    }
+
     const { id } = await params;
     const body = await request.json();
     const action = String(body.action ?? "");
@@ -80,6 +90,15 @@ export async function PATCH(
           },
         },
         select: { id: true, status: true, terminationDate: true },
+      });
+      return NextResponse.json(updated);
+    }
+
+    if (action === "leave") {
+      const updated = await prisma.collaborator.update({
+        where: { id },
+        data: { status: "ON_LEAVE" },
+        select: { id: true, status: true },
       });
       return NextResponse.json(updated);
     }

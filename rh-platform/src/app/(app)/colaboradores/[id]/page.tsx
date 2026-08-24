@@ -4,6 +4,7 @@ import { DbNotice } from "@/components/DbNotice";
 import { DiscBadge } from "@/components/DiscBadge";
 import { DiscBars } from "@/components/DiscBars";
 import { getCollaborator, DbUnavailableError } from "@/lib/collaborators";
+import { getSessionUser } from "@/lib/auth";
 import { PROFILE_ARCHETYPES } from "@/lib/disc/score";
 import type { DiscFactor } from "@/lib/disc/types";
 import { prisma } from "@/lib/db";
@@ -61,6 +62,9 @@ export default async function CollaboratorDetailPage({
 
   if (!collaborator) notFound();
 
+  const me = await getSessionUser();
+  const isAdmin = me?.role === "ADMIN";
+
   const latest = collaborator.assessments[0];
   const archetype = latest ? PROFILE_ARCHETYPES[latest.primary as DiscFactor] : null;
   const activeOnboarding = collaborator.onboardingPlans[0];
@@ -89,6 +93,7 @@ export default async function CollaboratorDetailPage({
         </div>
       </div>
 
+      {isAdmin && (
       <CollaboratorActions
         collaborator={{
           id: collaborator.id,
@@ -109,6 +114,7 @@ export default async function CollaboratorDetailPage({
         companies={companies}
         managers={managers}
       />
+      )}
 
       {/* Dados cadastrais */}
       <div className="card" style={{ marginBottom: 16 }}>
@@ -283,7 +289,7 @@ export default async function CollaboratorDetailPage({
       <div className="card" style={{ marginTop: 16 }}>
         <div className="row-between">
           <h3 style={{ margin: 0 }}>Historico</h3>
-          <AddEventForm collaboratorId={collaborator.id} />
+          {isAdmin && <AddEventForm collaboratorId={collaborator.id} />}
         </div>
         {collaborator.events.length === 0 ? (
           <p className="muted" style={{ marginBottom: 0 }}>

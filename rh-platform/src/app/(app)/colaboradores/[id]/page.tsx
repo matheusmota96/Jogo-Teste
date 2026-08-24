@@ -43,12 +43,17 @@ export default async function CollaboratorDetailPage({
 
   let collaborator;
   let companies: { id: string; name: string }[] = [];
+  let managers: { id: string; name: string }[] = [];
   try {
     collaborator = await getCollaborator(id);
-    companies = await prisma.company.findMany({
-      orderBy: { name: "asc" },
-      select: { id: true, name: true },
-    });
+    [companies, managers] = await Promise.all([
+      prisma.company.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } }),
+      prisma.collaborator.findMany({
+        where: { id: { not: id }, status: "ACTIVE" },
+        orderBy: { name: "asc" },
+        select: { id: true, name: true },
+      }),
+    ]);
   } catch (err) {
     if (err instanceof DbUnavailableError) return <DbNotice />;
     throw err;
@@ -97,10 +102,12 @@ export default async function CollaboratorDetailPage({
           birthDate: collaborator.birthDate
             ? collaborator.birthDate.toISOString().slice(0, 10)
             : "",
+          managerId: collaborator.managerId ?? "",
           status: collaborator.status,
           companyIds: collaborator.companies.map((c) => c.id),
         }}
         companies={companies}
+        managers={managers}
       />
 
       {/* Dados cadastrais */}

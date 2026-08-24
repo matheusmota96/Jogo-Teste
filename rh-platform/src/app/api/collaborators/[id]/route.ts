@@ -44,6 +44,12 @@ export async function PATCH(
         data.companies = { set: body.companyIds.map((cid: unknown) => ({ id: String(cid) })) };
       }
 
+      if ("managerId" in body) {
+        const managerId = body.managerId ? String(body.managerId) : null;
+        data.manager =
+          managerId && managerId !== id ? { connect: { id: managerId } } : { disconnect: true };
+      }
+
       const updated = await prisma.collaborator.update({
         where: { id },
         data,

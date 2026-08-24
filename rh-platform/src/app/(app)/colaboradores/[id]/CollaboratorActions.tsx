@@ -12,6 +12,7 @@ type Values = {
   salary: string;
   admissionDate: string;
   birthDate: string;
+  managerId: string;
   status: string;
   companyIds: string[];
 };
@@ -19,9 +20,11 @@ type Values = {
 export function CollaboratorActions({
   collaborator,
   companies,
+  managers,
 }: {
   collaborator: Values;
   companies: { id: string; name: string }[];
+  managers: { id: string; name: string }[];
 }) {
   const router = useRouter();
   const [mode, setMode] = useState<null | "edit" | "terminate">(null);
@@ -35,6 +38,7 @@ export function CollaboratorActions({
     salary: collaborator.salary,
     admissionDate: collaborator.admissionDate,
     birthDate: collaborator.birthDate,
+    managerId: collaborator.managerId,
     companyIds: collaborator.companyIds,
   });
   const today = new Date().toISOString().slice(0, 10);
@@ -154,6 +158,20 @@ export function CollaboratorActions({
                 value={edit.birthDate}
                 onChange={(e) => setEdit({ ...edit, birthDate: e.target.value })}
               />
+            </div>
+            <div className="field">
+              <label>Gestor</label>
+              <select
+                value={edit.managerId}
+                onChange={(e) => setEdit({ ...edit, managerId: e.target.value })}
+              >
+                <option value="">Sem gestor</option>
+                {managers.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.name}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
           <div className="field">

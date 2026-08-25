@@ -189,21 +189,28 @@ export default async function DashboardPage({
       {/* LINHA 4 — PESSOAS */}
       <div className="grid cols-2" style={{ marginBottom: 24 }}>
         <div className="card">
-          <h3 style={{ marginTop: 0 }}>Distribuição por setor</h3>
-          <div className="disc-bars">
-            {data.distribution.map((d) => {
-              const max = Math.max(...data.distribution.map((x) => x.count), 1);
-              return (
-                <div className="disc-row" key={d.department}>
-                  <div className="disc-factor-name">{d.department}</div>
-                  <div className="disc-track">
-                    <div className="disc-fill" style={{ width: `${(d.count / max) * 100}%`, background: "var(--brand)" }} />
+          <h3 style={{ marginTop: 0 }}>Custo por departamento</h3>
+          <p className="muted" style={{ marginTop: -4, marginBottom: 12, fontSize: 13 }}>
+            Total mensal por setor
+          </p>
+          {data.sectors.length === 0 ? (
+            <p className="muted" style={{ margin: 0 }}>Sem dados de custo para os filtros.</p>
+          ) : (
+            <div className="disc-bars">
+              {data.sectors.map((s) => {
+                const max = Math.max(...data.sectors.map((x) => x.cost), 1);
+                return (
+                  <div className="disc-row" key={s.department}>
+                    <div className="disc-factor-name">{s.department}</div>
+                    <div className="disc-track">
+                      <div className="disc-fill" style={{ width: `${(s.cost / max) * 100}%`, background: "var(--brand)" }} />
+                    </div>
+                    <div className="disc-val">{formatBRLShort(s.cost)}</div>
                   </div>
-                  <div className="disc-val">{d.count}</div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         <div className="card">
@@ -268,6 +275,11 @@ function whenLabel(days: number): string {
   if (days === 0) return "Hoje";
   if (days === 1) return "Amanhã";
   return `em ${days} dias`;
+}
+
+function formatBRLShort(v: number): string {
+  if (v >= 1000) return `R$ ${(v / 1000).toFixed(v >= 10000 ? 0 : 1)}k`;
+  return `R$ ${v.toFixed(0)}`;
 }
 
 function StatCard({

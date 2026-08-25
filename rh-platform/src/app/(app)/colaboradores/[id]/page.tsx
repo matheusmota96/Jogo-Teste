@@ -10,6 +10,7 @@ import type { DiscFactor } from "@/lib/disc/types";
 import { prisma } from "@/lib/db";
 import { AddEventForm } from "./AddEventForm";
 import { CollaboratorActions } from "./CollaboratorActions";
+import { DadosCard } from "./DadosCard";
 
 export const dynamic = "force-dynamic";
 
@@ -94,100 +95,31 @@ export default async function CollaboratorDetailPage({
       </div>
 
       {isAdmin && (
-      <CollaboratorActions
-        collaborator={{
-          id: collaborator.id,
-          name: collaborator.name,
-          role: collaborator.role ?? "",
-          department: collaborator.department ?? "",
-          salary: collaborator.salary != null ? String(collaborator.salary) : "",
-          admissionDate: collaborator.admissionDate
-            ? collaborator.admissionDate.toISOString().slice(0, 10)
-            : "",
-          birthDate: collaborator.birthDate
-            ? collaborator.birthDate.toISOString().slice(0, 10)
-            : "",
-          managerId: collaborator.managerId ?? "",
-          status: collaborator.status,
-          companyIds: collaborator.companies.map((c) => c.id),
-        }}
+        <CollaboratorActions collaboratorId={collaborator.id} status={collaborator.status} />
+      )}
+
+      <DadosCard
+        id={collaborator.id}
+        isAdmin={isAdmin}
+        name={collaborator.name}
+        positionId={collaborator.position?.id ?? null}
+        positionTitle={collaborator.position?.title ?? null}
+        role={collaborator.role ?? ""}
+        department={collaborator.department ?? ""}
+        salary={collaborator.salary}
+        admissionDate={
+          collaborator.admissionDate ? collaborator.admissionDate.toISOString().slice(0, 10) : ""
+        }
+        birthDate={
+          collaborator.birthDate ? collaborator.birthDate.toISOString().slice(0, 10) : ""
+        }
+        managerId={collaborator.managerId ?? ""}
+        managerName={collaborator.manager?.name ?? null}
+        reportsCount={collaborator.reports.length}
+        currentCompanies={collaborator.companies}
         companies={companies}
         managers={managers}
       />
-      )}
-
-      {/* Dados cadastrais */}
-      <div className="card" style={{ marginBottom: 16 }}>
-        <h3 style={{ marginTop: 0 }}>Dados</h3>
-        <div className="grid cols-3">
-          <div>
-            <div className="stat-label">Cargo</div>
-            <div>
-              {collaborator.position ? (
-                <Link href={`/cargos/${collaborator.position.id}`}>
-                  {collaborator.position.title}
-                </Link>
-              ) : (
-                collaborator.role ?? "-"
-              )}
-            </div>
-          </div>
-          <div>
-            <div className="stat-label">Gestor</div>
-            <div>
-              {collaborator.manager ? (
-                <Link href={`/colaboradores/${collaborator.manager.id}`}>
-                  {collaborator.manager.name}
-                </Link>
-              ) : (
-                "-"
-              )}
-            </div>
-          </div>
-          <div>
-            <div className="stat-label">Salario</div>
-            <div>{money(collaborator.salary)}</div>
-          </div>
-          <div>
-            <div className="stat-label">Admissao</div>
-            <div>
-              {collaborator.admissionDate
-                ? collaborator.admissionDate.toLocaleDateString("pt-BR")
-                : "-"}
-            </div>
-          </div>
-          <div>
-            <div className="stat-label">Empresa</div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
-              {collaborator.companies.length > 0 ? (
-                collaborator.companies.map((c) => (
-                  <span key={c.id} className="pill blue">
-                    {c.name}
-                  </span>
-                ))
-              ) : (
-                <span>-</span>
-              )}
-            </div>
-          </div>
-          <div>
-            <div className="stat-label">Departamento</div>
-            <div>{collaborator.department ?? "-"}</div>
-          </div>
-          <div>
-            <div className="stat-label">Nascimento</div>
-            <div>
-              {collaborator.birthDate
-                ? collaborator.birthDate.toLocaleDateString("pt-BR")
-                : "-"}
-            </div>
-          </div>
-          <div>
-            <div className="stat-label">Liderados</div>
-            <div>{collaborator.reports.length}</div>
-          </div>
-        </div>
-      </div>
 
       {/* DNA Comportamental */}
       {latest && (
